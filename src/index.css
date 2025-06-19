@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS pour les couleurs personnalisées */
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #6B7280;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #8B5CF6;
+}
+
+/* Thème sombre */
+.dark {
+  --tw-bg-opacity: 1;
+  background-color: rgb(31 41 55 / var(--tw-bg-opacity));
+  color: rgb(249 250 251 / var(--tw-text-opacity));
+}
+
+.dark .bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity));
+}
+
+.dark .text-gray-900 {
+  --tw-text-opacity: 1;
+  color: rgb(243 244 246 / var(--tw-text-opacity));
+}
+
+.dark .text-gray-800 {
+  --tw-text-opacity: 1;
+  color: rgb(229 231 235 / var(--tw-text-opacity));
+}
+
+.dark .text-gray-700 {
+  --tw-text-opacity: 1;
+  color: rgb(209 213 219 / var(--tw-text-opacity));
+}
+
+.dark .text-gray-600 {
+  --tw-text-opacity: 1;
+  color: rgb(156 163 175 / var(--tw-text-opacity));
+}
+
+.dark .border-gray-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(75 85 99 / var(--tw-border-opacity));
+}
+
+.dark .border-gray-300 {
+  --tw-border-opacity: 1;
+  border-color: rgb(107 114 128 / var(--tw-border-opacity));
+}
+
+.dark .bg-gray-50 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity));
+}
+
+.dark .bg-gray-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(107 114 128 / var(--tw-bg-opacity));
+}
+
+/* Classes utilitaires pour les couleurs personnalisées */
+.bg-custom-primary {
+  background-color: var(--color-primary);
+}
+
+.text-custom-primary {
+  color: var(--color-primary);
+}
+
+.border-custom-primary {
+  border-color: var(--color-primary);
+}
+
+.bg-custom-secondary {
+  background-color: var(--color-secondary);
+}
+
+.text-custom-secondary {
+  color: var(--color-secondary);
+}
+
+.bg-custom-success {
+  background-color: var(--color-success);
+}
+
+.text-custom-success {
+  color: var(--color-success);
+}
+
+.bg-custom-warning {
+  background-color: var(--color-warning);
+}
+
+.text-custom-warning {
+  color: var(--color-warning);
+}
+
+.bg-custom-error {
+  background-color: var(--color-error);
+}
+
+.text-custom-error {
+  color: var(--color-error);
+}
+
+.bg-custom-info {
+  background-color: var(--color-info);
+}
+
+.text-custom-info {
+  color: var(--color-info);
+}
+
+/* Transitions fluides pour le changement de thème */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Amélioration de l'accessibilité pour le thème sombre */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: rgb(55 65 81);
+  color: rgb(243 244 246);
+  border-color: rgb(107 114 128);
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  background-color: rgb(75 85 99);
+  border-color: var(--color-primary);
+}
+
+/* Scrollbar personnalisée pour le thème sombre */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: rgb(55 65 81);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(107 114 128);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(156 163 175);
+}
