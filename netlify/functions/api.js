@@ -727,10 +727,7 @@ const dbOperations = {
                                paid_amount, remaining_amount, profit, platform_id, platform_buying_price,
                                payment_type, subscription_duration, subscription_start_date, subscription_end_date,
                                notes, created_at)
-        VALUES ($1::VARCHAR, $2::VARCHAR, $3::VARCHAR, $4::VARCHAR, $5::VARCHAR, $6::VARCHAR, 
-                $7::INTEGER, $8::DECIMAL, $9::DECIMAL, $10::TIMESTAMP, $11::VARCHAR, $12::VARCHAR,
-                $13::DECIMAL, $14::DECIMAL, $15::DECIMAL, $16::VARCHAR, $17::DECIMAL,
-                $18::VARCHAR, $19::INTEGER, $20::TIMESTAMP, $21::TIMESTAMP, $22::TEXT, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, CURRENT_TIMESTAMP)
         RETURNING *
       `;
       // Calculate remaining amount based on payment status
@@ -749,28 +746,28 @@ const dbOperations = {
 
       // Ensure proper type conversion for PostgreSQL
       const values = [
-        id,                                                  // $1: VARCHAR
-        saleData.productId || null,                         // $2: VARCHAR
-        saleData.productName || null,                       // $3: VARCHAR
-        saleData.subscriberId || null,                      // $4: VARCHAR
-        saleData.customerName || null,                      // $5: VARCHAR
-        saleData.customerPhone || null,                     // $6: VARCHAR
-        parseInt(saleData.quantity, 10) || 1,               // $7: INTEGER
-        parseFloat(saleData.unitPrice) || 0,                // $8: DECIMAL
-        parseFloat(totalPrice) || 0,                        // $9: DECIMAL
+        String(id),                                          // $1: VARCHAR - ensure string type
+        saleData.productId ? String(saleData.productId) : null, // $2: VARCHAR - ensure string or null
+        saleData.productName ? String(saleData.productName) : null, // $3: VARCHAR - ensure string or null  
+        saleData.subscriberId ? String(saleData.subscriberId) : null, // $4: VARCHAR - ensure string or null
+        saleData.customerName ? String(saleData.customerName) : null, // $5: VARCHAR - ensure string or null
+        saleData.customerPhone ? String(saleData.customerPhone) : null, // $6: VARCHAR - ensure string or null
+        Number.isInteger(saleData.quantity) ? saleData.quantity : parseInt(saleData.quantity, 10) || 1, // $7: INTEGER
+        Number.isFinite(saleData.unitPrice) ? saleData.unitPrice : parseFloat(saleData.unitPrice) || 0, // $8: DECIMAL
+        Number.isFinite(totalPrice) ? totalPrice : parseFloat(totalPrice) || 0, // $9: DECIMAL
         saleData.saleDate || new Date().toISOString(),      // $10: TIMESTAMP
-        saleData.paymentMethod || 'cash',                   // $11: VARCHAR
-        paymentStatus || 'pending',                         // $12: VARCHAR
-        parseFloat(paidAmount) || 0,                        // $13: DECIMAL
-        parseFloat(remainingAmount) || 0,                   // $14: DECIMAL
-        parseFloat(saleData.profit || 0),                   // $15: DECIMAL
-        saleData.platformId || null,                        // $16: VARCHAR
-        parseFloat(saleData.platformBuyingPrice || 0),      // $17: DECIMAL
-        saleData.paymentType || 'one-time',                 // $18: VARCHAR
+        saleData.paymentMethod ? String(saleData.paymentMethod) : 'cash', // $11: VARCHAR - ensure string
+        paymentStatus ? String(paymentStatus) : 'pending',  // $12: VARCHAR - ensure string
+        Number.isFinite(paidAmount) ? paidAmount : parseFloat(paidAmount) || 0, // $13: DECIMAL
+        Number.isFinite(remainingAmount) ? remainingAmount : parseFloat(remainingAmount) || 0, // $14: DECIMAL
+        Number.isFinite(saleData.profit) ? saleData.profit : parseFloat(saleData.profit || 0), // $15: DECIMAL
+        saleData.platformId ? String(saleData.platformId) : null, // $16: VARCHAR - ensure string or null
+        Number.isFinite(saleData.platformBuyingPrice) ? saleData.platformBuyingPrice : parseFloat(saleData.platformBuyingPrice || 0), // $17: DECIMAL
+        saleData.paymentType ? String(saleData.paymentType) : 'one-time', // $18: VARCHAR - ensure string
         saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null, // $19: INTEGER
-        subscriptionStartDate || null,                      // $20: TIMESTAMP
-        subscriptionEndDate || null,                        // $21: TIMESTAMP
-        saleData.notes || null                              // $22: TEXT
+        subscriptionStartDate,                               // $20: TIMESTAMP
+        subscriptionEndDate,                                 // $21: TIMESTAMP
+        saleData.notes ? String(saleData.notes) : null       // $22: TEXT - ensure string or null
       ];
 
       // Debug logging with detailed value inspection
