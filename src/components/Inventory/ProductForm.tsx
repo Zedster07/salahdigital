@@ -3,7 +3,18 @@ import { useApp, useDatabase } from '../../contexts/AppContext';
 import { t } from '../../utils/translations';
 import { generateId } from '../../utils/helpers';
 import { DigitalProduct } from '../../types';
-import { ArrowLeft, Save, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Save,
+  X,
+  Package,
+  DollarSign,
+  CreditCard,
+  Calculator,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle
+} from 'lucide-react';
 
 interface ProductFormProps {
   product?: DigitalProduct | null;
@@ -26,6 +37,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     minStockAlert: 5,
     averagePurchasePrice: 0,
     suggestedSellPrice: 0,
+    // Platform-related fields (Task 9)
+    platformId: '',
+    platformBuyingPrice: 0,
+    profitMargin: 30,
     isActive: true,
   });
 
@@ -42,6 +57,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         minStockAlert: product.minStockAlert,
         averagePurchasePrice: product.averagePurchasePrice,
         suggestedSellPrice: product.suggestedSellPrice,
+        // Platform-related fields (Task 9)
+        platformId: product.platformId || '',
+        platformBuyingPrice: product.platformBuyingPrice || 0,
+        profitMargin: product.profitMargin || 30,
         isActive: product.isActive,
       });
     }
@@ -52,6 +71,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     setIsLoading(true);
     
     try {
+      // Calculate selling price based on platform buying price and margin
+      const calculatedSellPrice = formData.platformBuyingPrice && formData.profitMargin
+        ? formData.platformBuyingPrice * (1 + formData.profitMargin / 100)
+        : formData.suggestedSellPrice;
+
       const productData: DigitalProduct = {
         id: product?.id || generateId(),
         name: formData.name,
@@ -61,7 +85,11 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
         currentStock: formData.currentStock,
         minStockAlert: formData.minStockAlert,
         averagePurchasePrice: formData.averagePurchasePrice,
-        suggestedSellPrice: formData.suggestedSellPrice,
+        suggestedSellPrice: calculatedSellPrice,
+        // Platform-related fields (Task 9)
+        platformId: formData.platformId || undefined,
+        platformBuyingPrice: formData.platformBuyingPrice,
+        profitMargin: formData.profitMargin,
         isActive: formData.isActive,
         createdAt: product?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -105,40 +133,53 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
     { value: 'custom', label: t('custom', settings.language) },
   ];
 
-  const margin = formData.averagePurchasePrice > 0 ? 
-    ((formData.suggestedSellPrice - formData.averagePurchasePrice) / formData.averagePurchasePrice * 100).toFixed(1) : 0;
+  // Calculate margin based on platform pricing or traditional pricing
+  const margin = formData.platformId && formData.platformBuyingPrice > 0 ?
+    formData.profitMargin.toFixed(1) :
+    formData.averagePurchasePrice > 0 ?
+      ((formData.suggestedSellPrice - formData.averagePurchasePrice) / formData.averagePurchasePrice * 100).toFixed(1) : 0;
+
+  const profitAmount = formData.platformId && formData.platformBuyingPrice > 0 ?
+    (formData.suggestedSellPrice - formData.platformBuyingPrice) :
+    (formData.suggestedSellPrice - formData.averagePurchasePrice);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Enhanced Header (Task 16) */}
       <div className="flex items-center space-x-4">
         <button
           onClick={onCancel}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         </button>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            {isEditing ? 'Modifier l\'article' : 'Ajouter un article'}
-          </h2>
-          <p className="text-gray-600 mt-1">
-            {isEditing ? 'Modifiez les informations de l\'article' : 'Ajoutez un nouvel article à votre catalogue'}
-          </p>
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+            <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {isEditing ? 'Modifier l\'article' : 'Ajouter un article'}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              {isEditing ? 'Modifiez les informations de l\'article' : 'Ajoutez un nouvel article à votre catalogue'}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Basic Information */}
+      {/* Enhanced Form (Task 16) */}
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Basic Information Section */}
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-blue-600 dark:text-blue-400" />
               Informations de base
             </h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Nom de l'article *
               </label>
               <input
@@ -146,20 +187,20 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 required
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Ex: Netflix Premium, IPTV Gold, etc."
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('category', settings.language)} *
               </label>
               <select
                 required
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 {categories.map((category) => (
                   <option key={category.value} value={category.value}>
@@ -167,7 +208,7 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                   </option>
                 ))}
               </select>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 💡 Vous pouvez ajouter de nouvelles catégories dans les Paramètres
               </p>
             </div>
@@ -202,7 +243,39 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
                 placeholder="Description de l'article..."
               />
             </div>
-            
+
+            {/* Enhanced Platform Association (Task 16) */}
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                <CreditCard className="h-4 w-4 mr-2 text-purple-600 dark:text-purple-400" />
+                Plateforme fournisseur
+              </label>
+              <select
+                value={formData.platformId}
+                onChange={(e) => handleInputChange('platformId', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">Aucune plateforme sélectionnée</option>
+                {state.platforms?.filter(p => p.isActive).map((platform) => (
+                  <option key={platform.id} value={platform.id}>
+                    {platform.name} (Solde: {platform.creditBalance.toFixed(2)} DZD)
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-purple-600 dark:text-purple-400 mt-2 flex items-center">
+                <AlertTriangle className="h-4 w-4 mr-1" />
+                Associez ce produit à une plateforme fournisseur pour la gestion automatique des crédits
+              </p>
+              {formData.platformId && (
+                <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded border border-purple-200 dark:border-purple-700">
+                  <div className="flex items-center text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Plateforme associée - Gestion automatique des crédits activée
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center">
               <input
                 type="checkbox"
@@ -217,9 +290,10 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
             </div>
           </div>
 
-          {/* Stock and Pricing */}
+          {/* Enhanced Stock and Pricing Section (Task 16) */}
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
+              <DollarSign className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
               Stock et tarification
             </h3>
             
@@ -252,53 +326,174 @@ export function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix d'achat moyen
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.averagePurchasePrice}
-                onChange={(e) => handleInputChange('averagePurchasePrice', parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Prix de vente suggéré
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.suggestedSellPrice}
-                onChange={(e) => handleInputChange('suggestedSellPrice', parseFloat(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="0"
-              />
-              {settings.categoryPricing && settings.categoryPricing[formData.category as keyof typeof settings.categoryPricing] && (
-                <p className="text-sm text-gray-500 mt-1">
-                  💡 Prix suggéré par défaut: {settings.categoryPricing[formData.category as keyof typeof settings.categoryPricing]} DZD
-                </p>
-              )}
-            </div>
-            
-            {/* Margin Display */}
-            {formData.averagePurchasePrice > 0 && formData.suggestedSellPrice > 0 && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900">Marge bénéficiaire:</span>
-                  <span className="text-lg font-bold text-blue-600">{margin}%</span>
+            {/* Platform-specific pricing (Task 9) */}
+            {formData.platformId ? (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prix d'achat plateforme *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required={!!formData.platformId}
+                    value={formData.platformBuyingPrice}
+                    onChange={(e) => {
+                      const newPrice = parseFloat(e.target.value) || 0;
+                      handleInputChange('platformBuyingPrice', newPrice);
+                      // Auto-calculate selling price when buying price changes
+                      if (formData.profitMargin > 0) {
+                        const calculatedPrice = newPrice * (1 + formData.profitMargin / 100);
+                        handleInputChange('suggestedSellPrice', calculatedPrice);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Prix d'achat depuis la plateforme"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    💰 Coût d'achat de ce produit depuis la plateforme sélectionnée
+                  </p>
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-sm text-blue-700">Bénéfice par vente:</span>
-                  <span className="text-sm font-semibold text-blue-800">
-                    {(formData.suggestedSellPrice - formData.averagePurchasePrice).toFixed(2)} DZD
-                  </span>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Marge bénéficiaire (%) *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    required={!!formData.platformId}
+                    value={formData.profitMargin}
+                    onChange={(e) => {
+                      const newMargin = parseFloat(e.target.value) || 0;
+                      handleInputChange('profitMargin', newMargin);
+                      // Auto-calculate selling price when margin changes
+                      if (formData.platformBuyingPrice > 0) {
+                        const calculatedPrice = formData.platformBuyingPrice * (1 + newMargin / 100);
+                        handleInputChange('suggestedSellPrice', calculatedPrice);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="30"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    📈 Pourcentage de marge bénéficiaire souhaité
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prix de vente calculé
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.suggestedSellPrice}
+                    onChange={(e) => handleInputChange('suggestedSellPrice', parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    placeholder="Prix calculé automatiquement"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    🧮 Calculé automatiquement: Prix d'achat + Marge
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prix d'achat moyen
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.averagePurchasePrice}
+                    onChange={(e) => handleInputChange('averagePurchasePrice', parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prix de vente suggéré
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.suggestedSellPrice}
+                    onChange={(e) => handleInputChange('suggestedSellPrice', parseFloat(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="0"
+                  />
+                  {settings.categoryPricing && settings.categoryPricing[formData.category as keyof typeof settings.categoryPricing] && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      💡 Prix suggéré par défaut: {settings.categoryPricing[formData.category as keyof typeof settings.categoryPricing]} DZD
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+            
+            {/* Enhanced Profit Calculation Display (Task 16) */}
+            {((formData.platformId && formData.platformBuyingPrice > 0) ||
+              (!formData.platformId && formData.averagePurchasePrice > 0)) &&
+              formData.suggestedSellPrice > 0 && (
+              <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-3 flex items-center">
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Analyse de Rentabilité
+                </h4>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700 dark:text-green-300">Marge bénéficiaire:</span>
+                    <span className={`text-lg font-bold ${
+                      parseFloat(margin) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {margin}%
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-green-700 dark:text-green-300">Bénéfice par vente:</span>
+                    <span className={`text-sm font-semibold ${
+                      profitAmount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {profitAmount >= 0 ? '+' : ''}{profitAmount.toFixed(2)} DZD
+                    </span>
+                  </div>
+
+                  {formData.platformId && (
+                    <>
+                      <div className="border-t border-green-200 dark:border-green-700 pt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-green-700 dark:text-green-300">Coût plateforme:</span>
+                          <span className="text-sm font-semibold text-green-800 dark:text-green-200">
+                            {formData.platformBuyingPrice.toFixed(2)} DZD
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm text-green-700 dark:text-green-300">Prix de vente:</span>
+                          <span className="text-sm font-semibold text-green-800 dark:text-green-200">
+                            {formData.suggestedSellPrice.toFixed(2)} DZD
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded border border-green-300 dark:border-green-600">
+                        <div className="flex items-center text-sm text-green-600 dark:text-green-400">
+                          <TrendingUp className="h-4 w-4 mr-2" />
+                          Gestion automatique des crédits plateforme activée
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}

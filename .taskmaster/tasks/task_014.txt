@@ -1,0 +1,17 @@
+# Task ID: 14
+# Title: Create Financial Reporting API Endpoints
+# Status: pending
+# Dependencies: 13
+# Priority: medium
+# Description: Develop API endpoints for accessing financial reports and metrics.
+# Details:
+Implement the following API endpoints:
+- GET /api/reports/platform-profitability
+- GET /api/reports/credit-utilization
+- GET /api/reports/sales-profit
+- GET /api/reports/low-credit-platforms
+
+Implement filtering parameters for all endpoints. Support various output formats (JSON, CSV). Add pagination for large reports. Implement caching headers for improved performance. Document API using OpenAPI/Swagger.
+
+# Test Strategy:
+Write API tests for each reporting endpoint. Test with various filter combinations. Verify report data matches expected results. Test pagination and sorting. Test performance with large datasets. Verify cache headers work correctly.

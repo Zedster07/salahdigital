@@ -1,0 +1,68 @@
+# Task ID: 17
+# Title: Redesign Sales UI for New Workflow
+# Status: pending
+# Dependencies: 12, 15
+# Priority: high
+# Description: Update the sales interface to incorporate platform selection, payment types, and subscription durations.
+# Details:
+Update the following UI components:
+- Sales creation form to include platform selection
+- Add payment type selection (one-time/recurring)
+- Add subscription duration field for recurring payments
+- Show buying price, selling price, and profit calculation
+- Display platform credit balance during sales process
+
+Implement dynamic product filtering based on selected platform. Add validation for sufficient platform credits. Implement real-time profit calculation as prices change. Create intuitive UI for subscription duration selection.
+
+# Test Strategy:
+Write UI component tests for the updated sales interface. Test the complete sales flow. Verify platform selection and product filtering. Test payment type and subscription duration logic. Test validation for required fields and sufficient credits. Create integration tests for the end-to-end sales process.
+
+# Subtasks:
+## 1. Update Sales Creation Form [pending]
+### Dependencies: None
+### Description: Modify the sales creation form to include platform selection
+### Details:
+Add a dropdown menu for platform selection in the sales creation form. Ensure the selected platform is saved with the sale data.
+
+## 2. Implement Payment Type Selection [pending]
+### Dependencies: 17.1
+### Description: Add payment type selection (one-time/recurring) to the sales interface
+### Details:
+Create radio buttons or a dropdown for selecting between one-time and recurring payment types. Update the form logic to show/hide relevant fields based on the selection.
+
+## 3. Add Subscription Duration Field [pending]
+### Dependencies: 17.2
+### Description: Implement a subscription duration field for recurring payments
+### Details:
+Add an input field for subscription duration, visible only when recurring payment is selected. Include validation for acceptable duration ranges.
+
+## 4. Display Price and Profit Information [pending]
+### Dependencies: 17.1
+### Description: Show buying price, selling price, and profit calculation in the UI
+### Details:
+Add fields to display buying price, selling price, and calculated profit. Implement real-time updates as prices change.
+
+## 5. Implement Platform Credit Balance Display [pending]
+### Dependencies: 17.1
+### Description: Show platform credit balance during the sales process
+### Details:
+Fetch and display the current platform credit balance based on the selected platform. Update in real-time if changes occur during the sales process.
+
+## 6. Create Dynamic Product Filtering [pending]
+### Dependencies: 17.1
+### Description: Implement dynamic product filtering based on selected platform
+### Details:
+Develop a filtering mechanism that updates the available products based on the selected platform. Ensure the product list refreshes immediately upon platform selection.
+
+## 7. Add Platform Credit Validation [pending]
+### Dependencies: 17.5, 17.6
+### Description: Implement validation for sufficient platform credits
+### Details:
+Create a validation check that compares the required credits for the selected product against the available platform credit balance. Display warnings or errors if insufficient credits are available.
+
+## 8. Design Subscription Duration UI [pending]
+### Dependencies: 17.3
+### Description: Create an intuitive UI for subscription duration selection
+### Details:
+Design and implement a user-friendly interface for selecting subscription duration, such as a slider or predefined options. Ensure it integrates well with the overall form design.
+

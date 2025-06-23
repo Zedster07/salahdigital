@@ -1,0 +1,17 @@
+# Task ID: 10
+# Title: Update Product API Endpoints
+# Status: pending
+# Dependencies: 7, 9
+# Priority: medium
+# Description: Modify existing product API endpoints to include platform association and platform-specific pricing.
+# Details:
+Update the following API endpoints:
+- GET /api/products - Add platform filtering
+- GET /api/products/:id - Include platform details
+- POST /api/products - Require platform association
+- PUT /api/products/:id - Support platform updates
+
+Update request validation to include platform-related fields. Modify response structures to include platform information. Update documentation to reflect changes. Consider adding endpoints for platform-specific product operations if needed.
+
+# Test Strategy:
+Update API tests to verify platform-related functionality. Test platform filtering in list endpoints. Verify platform association validation. Test that platform details are correctly included in responses. Create integration tests for the complete product management flow.

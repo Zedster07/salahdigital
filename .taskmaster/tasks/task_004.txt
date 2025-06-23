@@ -1,0 +1,18 @@
+# Task ID: 4
+# Title: Update Sales Table for Platform Integration
+# Status: pending
+# Dependencies: 1, 3
+# Priority: high
+# Description: Modify the stock_sales table to include platform-related information and profit tracking.
+# Details:
+Alter the 'stock_sales' table to add:
+- platform_id (foreign key to platforms.id)
+- buying_price (decimal, captured at time of sale)
+- profit (decimal, calculated as selling_price - buying_price)
+- payment_type (enum: 'one-time', 'recurring')
+- subscription_duration (integer, in months, for recurring payments)
+
+Create a migration for these changes. Ensure data integrity by adding appropriate constraints. Update any triggers or stored procedures that interact with the sales table. Consider adding computed columns for profit if your database supports it (e.g., PostgreSQL generated columns).
+
+# Test Strategy:
+Test the migration on a copy of production data. Verify that new sales correctly store platform information. Test profit calculations. Validate that payment_type and subscription_duration work correctly for different scenarios. Test edge cases like zero-profit or negative-profit sales.

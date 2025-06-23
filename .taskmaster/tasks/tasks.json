@@ -1,0 +1,672 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Create Database Schema for Platform Entity",
+        "description": "Design and implement the database schema for the new Platform entity that will represent supplier platforms in the system.",
+        "details": "Create a new 'platforms' table with the following fields:\n- id (primary key)\n- name (varchar, required)\n- description (text)\n- contact_name (varchar)\n- contact_email (varchar)\n- contact_phone (varchar)\n- credit_balance (decimal, default 0)\n- low_balance_threshold (decimal, default 100)\n- created_at (timestamp)\n- updated_at (timestamp)\n\nUse migrations to create this table. Ensure proper indexing on frequently queried fields. Consider using PostgreSQL for robust transaction support and JSON capabilities for future extensibility. If using an ORM like Sequelize or TypeORM, define the appropriate model with validations.",
+        "testStrategy": "Write unit tests to verify schema creation. Test constraints like required fields and default values. Create integration tests to verify database operations (create, read, update, delete) on the Platform entity. Validate that credit_balance cannot be negative.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define database schema for 'platforms' table",
+            "description": "Create a detailed schema definition for the 'platforms' table with all required fields and their data types.",
+            "dependencies": [],
+            "details": "Include fields: id (primary key), name (varchar, required), description (text), contact_name (varchar), contact_email (varchar), contact_phone (varchar), credit_balance (decimal, default 0), low_balance_threshold (decimal, default 100), created_at (timestamp), updated_at (timestamp).",
+            "status": "done",
+            "testStrategy": "Review schema definition for completeness and correctness of data types."
+          },
+          {
+            "id": 2,
+            "title": "Create migration file for 'platforms' table",
+            "description": "Generate a migration file to create the 'platforms' table in the database.",
+            "dependencies": [
+              1
+            ],
+            "details": "Use appropriate migration tool (e.g., Sequelize migrations, TypeORM migrations) to create a migration file that will add the 'platforms' table to the database.",
+            "status": "done",
+            "testStrategy": "Verify migration file syntax and ensure all fields are included correctly."
+          },
+          {
+            "id": 3,
+            "title": "Implement database indexes",
+            "description": "Add appropriate indexes to the 'platforms' table for frequently queried fields.",
+            "dependencies": [
+              2
+            ],
+            "details": "Create indexes for fields like 'name', 'contact_email', and potentially 'credit_balance' to optimize query performance.",
+            "status": "done",
+            "testStrategy": "Test query performance with and without indexes to ensure improvement."
+          },
+          {
+            "id": 4,
+            "title": "Set up PostgreSQL database",
+            "description": "Configure a PostgreSQL database instance for the project.",
+            "dependencies": [],
+            "details": "Install PostgreSQL, create a new database for the project, and configure connection settings.",
+            "status": "done",
+            "testStrategy": "Verify successful connection to the database from the application."
+          },
+          {
+            "id": 5,
+            "title": "Define ORM model for Platform entity",
+            "description": "Create an ORM model (e.g., Sequelize or TypeORM) for the Platform entity with appropriate validations.",
+            "dependencies": [
+              1,
+              4
+            ],
+            "details": "Define the Platform model with all fields, data types, and add validations for required fields and data formats.",
+            "status": "done",
+            "testStrategy": "Unit test the model to ensure validations work as expected."
+          },
+          {
+            "id": 6,
+            "title": "Implement JSON capabilities",
+            "description": "Add support for JSON data types in the Platform model for future extensibility.",
+            "dependencies": [
+              5
+            ],
+            "details": "Include a JSON or JSONB field in the Platform model to store additional, flexible data.",
+            "status": "done",
+            "testStrategy": "Test storing and retrieving JSON data from the Platform model."
+          },
+          {
+            "id": 7,
+            "title": "Run and test migrations",
+            "description": "Execute the migration to create the 'platforms' table and verify its success.",
+            "dependencies": [
+              2,
+              3,
+              4
+            ],
+            "details": "Run the migration script to create the 'platforms' table with all fields and indexes in the PostgreSQL database.",
+            "status": "done",
+            "testStrategy": "Inspect the database schema to confirm table creation and run sample queries to test functionality."
+          },
+          {
+            "id": 8,
+            "title": "Document schema and model",
+            "description": "Create comprehensive documentation for the Platform entity schema and ORM model.",
+            "dependencies": [
+              5,
+              6,
+              7
+            ],
+            "details": "Write detailed documentation covering the database schema, ORM model, validations, and usage examples for the Platform entity.",
+            "status": "done",
+            "testStrategy": "Review documentation for completeness and clarity with team members."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Create Platform Credit Movements Table",
+        "description": "Design and implement the database schema for tracking all platform credit movements for audit trail purposes.",
+        "details": "Create a 'platform_credit_movements' table with the following fields:\n- id (primary key)\n- platform_id (foreign key to platforms.id)\n- amount (decimal, can be positive or negative)\n- balance_after (decimal, for audit purposes)\n- description (text, reason for movement)\n- reference_type (varchar, e.g., 'sale', 'deposit', 'adjustment')\n- reference_id (bigint, optional, for linking to sales or other entities)\n- created_by (user_id)\n- created_at (timestamp)\n\nAdd appropriate foreign key constraints and indexes. Ensure atomicity of credit operations by using database transactions. Consider implementing a trigger to update the platform's credit_balance automatically.",
+        "testStrategy": "Write unit tests for the schema. Create integration tests for credit movement operations. Test transaction rollbacks to ensure data integrity. Verify that the audit trail correctly records all operations. Test concurrent operations to ensure thread safety.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Modify Digital Products Table for Platform Association",
+        "description": "Update the existing digital_products table to include platform association and platform-specific pricing information.",
+        "details": "Alter the 'digital_products' table to add:\n- platform_id (foreign key to platforms.id)\n- buying_price (decimal, the cost from the platform)\n- profit_margin (decimal, optional, for automatic selling price calculation)\n\nCreate a migration that adds these fields while preserving existing data. Add a foreign key constraint to ensure referential integrity. Update any existing indexes to include the new platform_id field where appropriate. Consider adding a composite unique constraint on product_code and platform_id if products can exist on multiple platforms.",
+        "testStrategy": "Write migration tests to verify schema changes. Test that existing data is preserved. Verify foreign key constraints work correctly. Test CRUD operations on products with platform associations. Ensure buying_price validation works correctly.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Update Sales Table for Platform Integration",
+        "description": "Modify the stock_sales table to include platform-related information and profit tracking.",
+        "details": "Alter the 'stock_sales' table to add:\n- platform_id (foreign key to platforms.id)\n- buying_price (decimal, captured at time of sale)\n- profit (decimal, calculated as selling_price - buying_price)\n- payment_type (enum: 'one-time', 'recurring')\n- subscription_duration (integer, in months, for recurring payments)\n\nCreate a migration for these changes. Ensure data integrity by adding appropriate constraints. Update any triggers or stored procedures that interact with the sales table. Consider adding computed columns for profit if your database supports it (e.g., PostgreSQL generated columns).",
+        "testStrategy": "Test the migration on a copy of production data. Verify that new sales correctly store platform information. Test profit calculations. Validate that payment_type and subscription_duration work correctly for different scenarios. Test edge cases like zero-profit or negative-profit sales.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Create Platform Model and Repository",
+        "description": "Implement the business logic layer for Platform entity management with proper validation and business rules.",
+        "details": "Create a Platform model class with:\n- Properties matching the database schema\n- Validation rules for all fields\n- Methods for credit operations (addCredits, deductCredits)\n- Low balance detection logic\n\nImplement a Platform repository with:\n- CRUD operations\n- Credit management methods\n- Query methods for reporting\n\nUse a repository pattern for data access abstraction. Implement proper error handling and transaction management. Consider using a service layer for complex business logic. Use dependency injection for better testability.",
+        "testStrategy": "Write unit tests for all model methods and validations. Create integration tests for repository methods. Test credit operations with various scenarios including edge cases. Mock dependencies for unit testing. Test low balance alert functionality.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Implement Credit Management Service",
+        "description": "Create a service to handle all platform credit operations with proper transaction handling and audit trail.",
+        "details": "Implement a CreditManagementService with methods:\n- addCredits(platformId, amount, description, referenceType, referenceId)\n- deductCredits(platformId, amount, description, referenceType, referenceId)\n- getBalance(platformId)\n- getCreditMovements(platformId, filters)\n- checkLowBalanceStatus(platformId)\n\nEnsure all operations are atomic using database transactions. Create comprehensive audit trail entries for all operations. Implement proper error handling for insufficient funds scenarios. Use optimistic locking to prevent race conditions. Consider implementing a notification system for low balance alerts.",
+        "testStrategy": "Write unit tests for all service methods. Test transaction rollback scenarios. Create integration tests for the complete credit management flow. Test concurrent operations to ensure thread safety. Verify audit trail entries are created correctly.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Create Platform Management API Endpoints",
+        "description": "Develop RESTful API endpoints for platform management operations (CRUD).",
+        "details": "Implement the following API endpoints:\n- GET /api/platforms - List all platforms\n- GET /api/platforms/:id - Get platform details\n- POST /api/platforms - Create new platform\n- PUT /api/platforms/:id - Update platform\n- DELETE /api/platforms/:id - Delete platform (with safeguards)\n\nImplement proper request validation using a library like Joi or express-validator. Add authentication and authorization middleware. Include pagination for list endpoints. Implement proper error handling and response formatting. Use OpenAPI/Swagger for API documentation.",
+        "testStrategy": "Write API tests for each endpoint using a tool like Supertest or Jest. Test authentication and authorization scenarios. Verify validation works correctly for invalid inputs. Test pagination and filtering. Create integration tests that verify database changes.",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement Credit Management API Endpoints",
+        "description": "Develop API endpoints for platform credit operations and balance management.",
+        "details": "Implement the following API endpoints:\n- POST /api/platforms/:id/credits - Add credits\n- POST /api/platforms/:id/credits/deduct - Deduct credits\n- GET /api/platforms/:id/credits/balance - Get current balance\n- GET /api/platforms/:id/credits/movements - Get credit movement history\n\nImplement proper request validation. Ensure atomic operations with transaction support. Add appropriate error handling for cases like insufficient funds. Include filtering and pagination for movement history. Document API using OpenAPI/Swagger.",
+        "testStrategy": "Write API tests for each endpoint. Test success and failure scenarios. Verify transaction integrity during errors. Test concurrent requests to ensure thread safety. Verify audit trail entries are created correctly.",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          7
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Update Product Model and Repository",
+        "description": "Modify the existing product-related code to incorporate platform associations and platform-specific pricing.",
+        "details": "Update the Product model to include:\n- Platform association\n- Platform-specific buying price\n- Profit margin calculation\n\nModify the Product repository to:\n- Include platform data in queries\n- Support filtering by platform\n- Handle platform-specific pricing logic\n\nUpdate validation rules to ensure products have valid platform associations. Implement methods to calculate selling price based on buying price and profit margin. Update any existing product-related services to incorporate platform logic.",
+        "testStrategy": "Update unit tests for the modified model. Test platform association validation. Verify pricing calculations work correctly. Test repository methods with platform filtering. Create integration tests for the complete product management flow.",
+        "priority": "medium",
+        "dependencies": [
+          3,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Update Product API Endpoints",
+        "description": "Modify existing product API endpoints to include platform association and platform-specific pricing.",
+        "details": "Update the following API endpoints:\n- GET /api/products - Add platform filtering\n- GET /api/products/:id - Include platform details\n- POST /api/products - Require platform association\n- PUT /api/products/:id - Support platform updates\n\nUpdate request validation to include platform-related fields. Modify response structures to include platform information. Update documentation to reflect changes. Consider adding endpoints for platform-specific product operations if needed.",
+        "testStrategy": "Update API tests to verify platform-related functionality. Test platform filtering in list endpoints. Verify platform association validation. Test that platform details are correctly included in responses. Create integration tests for the complete product management flow.",
+        "priority": "medium",
+        "dependencies": [
+          7,
+          9
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Redesign Sales Service for Platform Integration",
+        "description": "Update the sales service to incorporate platform selection, credit deduction, and profit calculation.",
+        "details": "Modify the SalesService to:\n- Require platform selection for each sale\n- Capture buying price from the selected platform\n- Calculate profit automatically\n- Deduct credits from the platform balance\n- Support one-time and recurring payment types\n- Handle subscription durations\n\nImplement transaction management to ensure atomicity of sales operations and credit deductions. Add validation for sufficient platform credits before completing sales. Update any related services that depend on sales data.",
+        "testStrategy": "Write unit tests for the updated service. Test the complete sales flow including credit deduction. Verify profit calculations. Test different payment types and subscription durations. Test error scenarios like insufficient platform credits. Create integration tests for the end-to-end sales process.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          6,
+          9
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Update Sales API Endpoints",
+        "description": "Modify existing sales API endpoints to support the new platform-based workflow.",
+        "details": "Update the following API endpoints:\n- POST /api/sales - Add platform selection and payment type\n- GET /api/sales - Include platform and profit information\n- GET /api/sales/:id - Include detailed platform and profit data\n\nUpdate request validation for new required fields. Modify response structures to include platform and profit information. Update error handling for platform-specific errors like insufficient credits. Update documentation to reflect changes.",
+        "testStrategy": "Update API tests to verify platform-related functionality. Test the complete sales flow through the API. Verify platform credit deduction works correctly. Test different payment types and subscription durations. Test error scenarios and verify appropriate error responses.",
+        "priority": "high",
+        "dependencies": [
+          8,
+          11
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Implement Financial Reporting Service",
+        "description": "Create a service for generating financial reports related to platform profitability and credit utilization.",
+        "details": "Implement a FinancialReportingService with methods:\n- getPlatformProfitability(platformId, dateRange)\n- getCreditUtilization(platformId, dateRange)\n- getSalesProfitReport(filters)\n- getLowCreditPlatforms(threshold)\n\nImplement efficient query strategies using aggregation functions. Consider using database views for complex reports. Support various filtering options including date ranges, platforms, and products. Implement caching for frequently accessed reports. Use data transformation to format report data appropriately.",
+        "testStrategy": "Write unit tests for reporting methods. Create test fixtures with known financial outcomes. Verify report calculations match expected results. Test with various filter combinations. Test performance with large datasets. Create integration tests for the complete reporting flow.",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          11
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Create Financial Reporting API Endpoints",
+        "description": "Develop API endpoints for accessing financial reports and metrics.",
+        "details": "Implement the following API endpoints:\n- GET /api/reports/platform-profitability\n- GET /api/reports/credit-utilization\n- GET /api/reports/sales-profit\n- GET /api/reports/low-credit-platforms\n\nImplement filtering parameters for all endpoints. Support various output formats (JSON, CSV). Add pagination for large reports. Implement caching headers for improved performance. Document API using OpenAPI/Swagger.",
+        "testStrategy": "Write API tests for each reporting endpoint. Test with various filter combinations. Verify report data matches expected results. Test pagination and sorting. Test performance with large datasets. Verify cache headers work correctly.",
+        "priority": "medium",
+        "dependencies": [
+          13
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Create Platform Management UI Components",
+        "description": "Develop frontend components for platform management operations.",
+        "details": "Create the following UI components:\n- Platform list view with filtering and sorting\n- Platform detail view\n- Platform creation/edit form\n- Credit management interface\n- Credit movement history view\n\nUse a modern frontend framework like React with hooks or Vue.js 3 with Composition API. Implement form validation using a library like Formik or Vuelidate. Create reusable components for common elements. Implement proper error handling and loading states. Use a UI component library like Material-UI or Vuetify for consistent styling.",
+        "testStrategy": "Write unit tests for UI components using Jest and React Testing Library or Vue Test Utils. Create snapshot tests for component rendering. Test form validation logic. Test error handling and loading states. Create integration tests for complete user flows.",
+        "priority": "medium",
+        "dependencies": [
+          7,
+          8
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Update Product Management UI",
+        "description": "Modify existing product management interface to include platform association and platform-specific pricing.",
+        "details": "Update the following UI components:\n- Product list view to include platform information\n- Product detail view to show platform details\n- Product creation/edit form to include platform selection\n- Add buying price and profit margin fields\n\nImplement dynamic selling price calculation based on buying price and profit margin. Add platform filtering to product list. Update form validation for new required fields. Ensure backward compatibility for existing product data.",
+        "testStrategy": "Update UI component tests to verify platform-related functionality. Test platform selection in forms. Verify pricing calculations in the UI. Test filtering by platform. Create integration tests for complete product management flows.",
+        "priority": "medium",
+        "dependencies": [
+          10,
+          15
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Redesign Sales UI for New Workflow",
+        "description": "Update the sales interface to incorporate platform selection, payment types, and subscription durations.",
+        "details": "Update the following UI components:\n- Sales creation form to include platform selection\n- Add payment type selection (one-time/recurring)\n- Add subscription duration field for recurring payments\n- Show buying price, selling price, and profit calculation\n- Display platform credit balance during sales process\n\nImplement dynamic product filtering based on selected platform. Add validation for sufficient platform credits. Implement real-time profit calculation as prices change. Create intuitive UI for subscription duration selection.",
+        "testStrategy": "Write UI component tests for the updated sales interface. Test the complete sales flow. Verify platform selection and product filtering. Test payment type and subscription duration logic. Test validation for required fields and sufficient credits. Create integration tests for the end-to-end sales process.",
+        "priority": "high",
+        "dependencies": [
+          12,
+          15
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update Sales Creation Form",
+            "description": "Modify the sales creation form to include platform selection",
+            "dependencies": [],
+            "details": "Add a dropdown menu for platform selection in the sales creation form. Ensure the selected platform is saved with the sale data.",
+            "status": "done",
+            "testStrategy": "Verify that all available platforms are listed and the selected platform is correctly saved"
+          },
+          {
+            "id": 2,
+            "title": "Implement Payment Type Selection",
+            "description": "Add payment type selection (one-time/recurring) to the sales interface",
+            "dependencies": [
+              1
+            ],
+            "details": "Create radio buttons or a dropdown for selecting between one-time and recurring payment types. Update the form logic to show/hide relevant fields based on the selection.",
+            "status": "done",
+            "testStrategy": "Test both payment type selections and ensure appropriate fields are displayed/hidden"
+          },
+          {
+            "id": 3,
+            "title": "Add Subscription Duration Field",
+            "description": "Implement a subscription duration field for recurring payments",
+            "dependencies": [
+              2
+            ],
+            "details": "Add an input field for subscription duration, visible only when recurring payment is selected. Include validation for acceptable duration ranges.",
+            "status": "done",
+            "testStrategy": "Verify field visibility logic and test input validation for various duration values"
+          },
+          {
+            "id": 4,
+            "title": "Display Price and Profit Information",
+            "description": "Show buying price, selling price, and profit calculation in the UI",
+            "dependencies": [
+              1
+            ],
+            "details": "Add fields to display buying price, selling price, and calculated profit. Implement real-time updates as prices change.",
+            "status": "done",
+            "testStrategy": "Test real-time calculation accuracy with various price inputs"
+          },
+          {
+            "id": 5,
+            "title": "Implement Platform Credit Balance Display",
+            "description": "Show platform credit balance during the sales process",
+            "dependencies": [
+              1
+            ],
+            "details": "Fetch and display the current platform credit balance based on the selected platform. Update in real-time if changes occur during the sales process.",
+            "status": "done",
+            "testStrategy": "Verify accurate credit balance display for different platforms and test real-time updates"
+          },
+          {
+            "id": 6,
+            "title": "Create Dynamic Product Filtering",
+            "description": "Implement dynamic product filtering based on selected platform",
+            "dependencies": [
+              1
+            ],
+            "details": "Develop a filtering mechanism that updates the available products based on the selected platform. Ensure the product list refreshes immediately upon platform selection.",
+            "status": "done",
+            "testStrategy": "Test product list updates for various platform selections and verify correct filtering"
+          },
+          {
+            "id": 7,
+            "title": "Add Platform Credit Validation",
+            "description": "Implement validation for sufficient platform credits",
+            "dependencies": [
+              5,
+              6
+            ],
+            "details": "Create a validation check that compares the required credits for the selected product against the available platform credit balance. Display warnings or errors if insufficient credits are available.",
+            "status": "done",
+            "testStrategy": "Test validation with various credit balance scenarios and verify appropriate warnings/errors"
+          },
+          {
+            "id": 8,
+            "title": "Design Subscription Duration UI",
+            "description": "Create an intuitive UI for subscription duration selection",
+            "dependencies": [
+              3
+            ],
+            "details": "Design and implement a user-friendly interface for selecting subscription duration, such as a slider or predefined options. Ensure it integrates well with the overall form design.",
+            "status": "done",
+            "testStrategy": "Conduct usability testing to ensure the duration selection is intuitive and functions correctly"
+          }
+        ]
+      },
+      {
+        "id": 18,
+        "title": "Implement Financial Dashboard UI",
+        "description": "Create a dashboard interface for displaying key financial metrics and platform performance.",
+        "details": "Create the following dashboard components:\n- Platform profitability charts\n- Credit utilization graphs\n- Sales profit metrics\n- Low credit alerts\n- Key performance indicators\n\nUse a charting library like Chart.js, D3.js, or Recharts for data visualization. Implement filtering by date range and platform. Create responsive layouts for different screen sizes. Add export functionality for reports. Implement real-time or periodic data refresh.",
+        "testStrategy": "Write unit tests for dashboard components. Test chart rendering with various datasets. Verify filtering functionality. Test responsiveness on different screen sizes. Test export functionality. Create integration tests for the complete dashboard experience.",
+        "priority": "medium",
+        "dependencies": [
+          14,
+          15
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Create Data Migration Scripts",
+        "description": "Develop scripts to migrate existing data to the new platform-based model.",
+        "details": "Create migration scripts for:\n- Creating a default platform for existing products\n- Associating existing products with the default platform\n- Setting initial buying prices based on available data\n- Updating historical sales data with platform associations\n- Calculating historical profit data where possible\n\nImplement data validation before and after migration. Create rollback scripts for each migration step. Use database transactions to ensure atomicity. Add logging for all migration operations. Consider using a migration framework like Flyway or Liquibase.",
+        "testStrategy": "Test migration scripts on a copy of production data. Verify data integrity after migration. Test rollback procedures. Validate that all products have valid platform associations. Verify historical sales data is preserved. Test performance with large datasets.",
+        "priority": "high",
+        "dependencies": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Design Database Schema for Default Platform",
+            "description": "Create the database schema to support the new platform-based model, including a default platform for existing products.",
+            "dependencies": [],
+            "details": "Define tables and relationships for platforms, products, and their associations. Ensure the schema supports historical data and new platform-based structure.",
+            "status": "done",
+            "testStrategy": "Create test cases to verify schema integrity and constraints."
+          },
+          {
+            "id": 2,
+            "title": "Develop Script for Creating Default Platform",
+            "description": "Write a script to create a default platform in the new database structure.",
+            "dependencies": [
+              1
+            ],
+            "details": "Include platform name, description, and any necessary metadata. Ensure the script is idempotent.",
+            "status": "done",
+            "testStrategy": "Test script execution and verify default platform creation."
+          },
+          {
+            "id": 3,
+            "title": "Create Product Association Script",
+            "description": "Develop a script to associate existing products with the default platform.",
+            "dependencies": [
+              2
+            ],
+            "details": "Iterate through existing products and create associations with the default platform. Handle potential data inconsistencies.",
+            "status": "done",
+            "testStrategy": "Validate all products are correctly associated after script execution."
+          },
+          {
+            "id": 4,
+            "title": "Implement Buying Price Migration Script",
+            "description": "Write a script to set initial buying prices based on available data.",
+            "dependencies": [
+              3
+            ],
+            "details": "Extract existing price data, transform as needed, and update the new schema. Handle missing or invalid data gracefully.",
+            "status": "done",
+            "testStrategy": "Compare migrated prices with source data to ensure accuracy."
+          },
+          {
+            "id": 5,
+            "title": "Develop Historical Sales Data Migration Script",
+            "description": "Create a script to update historical sales data with new platform associations.",
+            "dependencies": [
+              3
+            ],
+            "details": "Modify existing sales records to include platform information. Ensure data integrity and consistency.",
+            "status": "done",
+            "testStrategy": "Verify sample of migrated sales data against original records."
+          },
+          {
+            "id": 6,
+            "title": "Implement Historical Profit Calculation Script",
+            "description": "Develop a script to calculate and populate historical profit data where possible.",
+            "dependencies": [
+              4,
+              5
+            ],
+            "details": "Use available sales and buying price data to compute profits. Handle scenarios with incomplete data.",
+            "status": "done",
+            "testStrategy": "Test profit calculations with known data sets for accuracy."
+          },
+          {
+            "id": 7,
+            "title": "Create Data Validation Scripts",
+            "description": "Implement scripts for data validation before and after migration.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "details": "Develop checks for data integrity, consistency, and completeness. Include validation for all migrated data types.",
+            "status": "done",
+            "testStrategy": "Run validation scripts on test data sets with known issues to ensure detection."
+          },
+          {
+            "id": 8,
+            "title": "Develop Rollback Scripts",
+            "description": "Create rollback scripts for each migration step to ensure reversibility.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "details": "Implement scripts to undo each migration step. Ensure data integrity is maintained during rollback.",
+            "status": "done",
+            "testStrategy": "Test rollback scripts by performing migration and then rollback, comparing final state with initial state."
+          },
+          {
+            "id": 9,
+            "title": "Implement Transaction Management",
+            "description": "Integrate database transactions into migration scripts to ensure atomicity.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "details": "Wrap each migration step in a database transaction. Handle commit and rollback scenarios.",
+            "status": "done",
+            "testStrategy": "Test transaction integrity by intentionally causing errors and verifying proper rollback."
+          },
+          {
+            "id": 10,
+            "title": "Add Logging Functionality",
+            "description": "Implement comprehensive logging for all migration operations.",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ],
+            "details": "Add detailed logging to each script, including start/end times, affected records, and any errors encountered.",
+            "status": "done",
+            "testStrategy": "Verify log output for various scenarios, including successful migrations and error conditions."
+          }
+        ]
+      },
+      {
+        "id": 20,
+        "title": "Remove Purchase-Related Code and Database Tables",
+        "description": "Identify and remove all code and database elements related to the deprecated 'Achats' (Purchases) feature.",
+        "details": "Identify all purchase-related elements:\n- Database tables (stock_purchases, etc.)\n- Models and repositories\n- Services and controllers\n- API endpoints\n- UI components\n\nCreate scripts to safely remove database tables after data migration. Remove or comment out related code. Update any dependencies that reference purchase-related components. Document all removed elements for future reference.",
+        "testStrategy": "Create a comprehensive inventory of purchase-related elements before removal. Test system functionality after removal to ensure no regressions. Verify that removed database tables don't break existing queries. Test that API endpoints return appropriate 404 responses. Verify UI doesn't attempt to access removed features.",
+        "priority": "medium",
+        "dependencies": [
+          19
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Implement Low Balance Alert System",
+        "description": "Create a notification system to alert users when platform credit balances fall below defined thresholds.",
+        "details": "Implement an alert system with:\n- Configurable threshold per platform\n- In-app notifications\n- Email alerts to administrators\n- Daily summary of low-balance platforms\n\nUse a notification service pattern. Implement a scheduled job to check balances periodically. Create a notification queue for reliability. Use a templating system for notification messages. Consider implementing webhooks for external integrations.",
+        "testStrategy": "Write unit tests for alert threshold logic. Test notification generation for various scenarios. Verify email sending functionality. Test scheduled jobs. Create integration tests for the complete alert flow. Test with various threshold configurations.",
+        "priority": "medium",
+        "dependencies": [
+          6,
+          15
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Create System-Wide Search for Platform-Related Entities",
+        "description": "Implement a search functionality that allows users to find products, sales, and credit movements across platforms.",
+        "details": "Implement a search service that:\n- Searches across platforms, products, and sales\n- Supports filtering by entity type\n- Includes platform-specific attributes in search results\n- Provides relevant context for each result\n\nConsider using Elasticsearch or a similar search engine for efficient full-text search. Implement proper indexing strategies. Create a unified search API endpoint. Design a user-friendly search interface with typeahead suggestions.",
+        "testStrategy": "Test search functionality with various query patterns. Verify search results match expected entities. Test performance with large datasets. Test filtering and sorting options. Create integration tests for the complete search flow.",
+        "priority": "low",
+        "dependencies": [
+          10,
+          12,
+          14
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Comprehensive System Testing",
+        "description": "Develop and execute a comprehensive testing plan to validate the refactored system.",
+        "details": "Create a testing plan that includes:\n- Unit tests for all components\n- Integration tests for key workflows\n- End-to-end tests for critical business processes\n- Performance testing for database operations\n- UI testing for all interfaces\n\nUse a combination of automated and manual testing. Create test data that covers various business scenarios. Document test cases and expected results. Use a CI/CD pipeline for automated test execution. Consider using tools like Cypress for end-to-end testing.",
+        "testStrategy": "Execute the comprehensive test plan. Document test results and any issues found. Verify that all business requirements are met. Test edge cases and error scenarios. Perform regression testing to ensure existing functionality is preserved.",
+        "priority": "high",
+        "dependencies": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Create User Documentation and Training Materials",
+        "description": "Develop comprehensive documentation and training materials for the refactored system.",
+        "details": "Create the following documentation:\n- User manual for platform management\n- Guide for credit operations\n- Updated product management documentation\n- New sales process workflow guide\n- Financial reporting documentation\n\nDevelop training materials including:\n- Video tutorials for key workflows\n- Interactive guides for new features\n- Quick reference cards for common tasks\n\nUse a documentation tool like GitBook or Docusaurus. Include screenshots and step-by-step instructions. Consider creating an in-app help system.",
+        "testStrategy": "Review documentation with stakeholders. Conduct user testing with documentation. Verify that all new features are adequately documented. Test that documentation links work correctly. Ensure documentation is accessible and easy to navigate.",
+        "priority": "medium",
+        "dependencies": [
+          17,
+          18,
+          21
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Implement Deployment and Monitoring Strategy",
+        "description": "Develop a plan for deploying the refactored system and monitoring its performance post-deployment.",
+        "details": "Create a deployment strategy that includes:\n- Database migration sequence\n- Code deployment process\n- Rollback procedures\n- Downtime minimization techniques\n- Post-deployment verification steps\n\nImplement monitoring for:\n- Application performance\n- Database query performance\n- API response times\n- Error rates and exceptions\n- User activity patterns\n\nUse a blue-green deployment approach to minimize downtime. Implement feature flags for gradual rollout. Use monitoring tools like New Relic, Datadog, or ELK stack. Create alerts for critical issues. Plan for 48-72 hours of enhanced monitoring post-deployment.",
+        "testStrategy": "Test deployment procedures in a staging environment. Verify that monitoring tools capture relevant metrics. Test rollback procedures. Simulate failure scenarios to verify alerting. Create a deployment checklist with verification steps.",
+        "priority": "high",
+        "dependencies": [
+          23
+        ],
+        "status": "done",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-06-19T13:06:32.335Z",
+      "updated": "2025-06-21T12:16:16.263Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

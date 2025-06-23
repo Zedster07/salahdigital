@@ -20,8 +20,8 @@ export function FinancialReports() {
   const [selectedProduct, setSelectedProduct] = useState('');
 
   const filteredData = useMemo(() => {
-    let sales = [...stockSales];
-    let purchases = [...stockPurchases];
+    let sales = [...(stockSales || [])];
+    let purchases = [...(stockPurchases || [])];
 
     // Filter by period
     if (selectedPeriod !== 'all') {
@@ -67,7 +67,7 @@ export function FinancialReports() {
     const profitMargin = totalSales > 0 ? (totalProfit / totalSales) * 100 : 0;
 
     // Top products by revenue
-    const productStats = digitalProducts.map(product => {
+    const productStats = (digitalProducts || []).map(product => {
       const productSales = sales.filter(sale => sale.productId === product.id);
       const productPurchases = purchases.filter(purchase => purchase.productId === product.id);
       

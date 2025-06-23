@@ -1,0 +1,17 @@
+# Task ID: 16
+# Title: Update Product Management UI
+# Status: pending
+# Dependencies: 10, 15
+# Priority: medium
+# Description: Modify existing product management interface to include platform association and platform-specific pricing.
+# Details:
+Update the following UI components:
+- Product list view to include platform information
+- Product detail view to show platform details
+- Product creation/edit form to include platform selection
+- Add buying price and profit margin fields
+
+Implement dynamic selling price calculation based on buying price and profit margin. Add platform filtering to product list. Update form validation for new required fields. Ensure backward compatibility for existing product data.
+
+# Test Strategy:
+Update UI component tests to verify platform-related functionality. Test platform selection in forms. Verify pricing calculations in the UI. Test filtering by platform. Create integration tests for complete product management flows.

@@ -6,6 +6,9 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[[extensions]]
+  package = "neon"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"

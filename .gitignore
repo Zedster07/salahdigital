@@ -26,3 +26,11 @@ dist-ssr
 
 # Local Netlify folder
 .netlify
+
+# Added by Task Master AI
+dev-debug.log
+# Dependency directories
+node_modules/
+# Environment variables
+.vscode
+# OS specific

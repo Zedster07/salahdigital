@@ -1,0 +1,18 @@
+# Task ID: 6
+# Title: Implement Credit Management Service
+# Status: pending
+# Dependencies: 2, 5
+# Priority: high
+# Description: Create a service to handle all platform credit operations with proper transaction handling and audit trail.
+# Details:
+Implement a CreditManagementService with methods:
+- addCredits(platformId, amount, description, referenceType, referenceId)
+- deductCredits(platformId, amount, description, referenceType, referenceId)
+- getBalance(platformId)
+- getCreditMovements(platformId, filters)
+- checkLowBalanceStatus(platformId)
+
+Ensure all operations are atomic using database transactions. Create comprehensive audit trail entries for all operations. Implement proper error handling for insufficient funds scenarios. Use optimistic locking to prevent race conditions. Consider implementing a notification system for low balance alerts.
+
+# Test Strategy:
+Write unit tests for all service methods. Test transaction rollback scenarios. Create integration tests for the complete credit management flow. Test concurrent operations to ensure thread safety. Verify audit trail entries are created correctly.

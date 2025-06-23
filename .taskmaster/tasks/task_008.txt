@@ -1,0 +1,17 @@
+# Task ID: 8
+# Title: Implement Credit Management API Endpoints
+# Status: pending
+# Dependencies: 6, 7
+# Priority: medium
+# Description: Develop API endpoints for platform credit operations and balance management.
+# Details:
+Implement the following API endpoints:
+- POST /api/platforms/:id/credits - Add credits
+- POST /api/platforms/:id/credits/deduct - Deduct credits
+- GET /api/platforms/:id/credits/balance - Get current balance
+- GET /api/platforms/:id/credits/movements - Get credit movement history
+
+Implement proper request validation. Ensure atomic operations with transaction support. Add appropriate error handling for cases like insufficient funds. Include filtering and pagination for movement history. Document API using OpenAPI/Swagger.
+
+# Test Strategy:
+Write API tests for each endpoint. Test success and failure scenarios. Verify transaction integrity during errors. Test concurrent requests to ensure thread safety. Verify audit trail entries are created correctly.

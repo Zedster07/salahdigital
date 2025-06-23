@@ -1,0 +1,22 @@
+# Task ID: 2
+# Title: Create Platform Credit Movements Table
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Design and implement the database schema for tracking all platform credit movements for audit trail purposes.
+# Details:
+Create a 'platform_credit_movements' table with the following fields:
+- id (primary key)
+- platform_id (foreign key to platforms.id)
+- amount (decimal, can be positive or negative)
+- balance_after (decimal, for audit purposes)
+- description (text, reason for movement)
+- reference_type (varchar, e.g., 'sale', 'deposit', 'adjustment')
+- reference_id (bigint, optional, for linking to sales or other entities)
+- created_by (user_id)
+- created_at (timestamp)
+
+Add appropriate foreign key constraints and indexes. Ensure atomicity of credit operations by using database transactions. Consider implementing a trigger to update the platform's credit_balance automatically.
+
+# Test Strategy:
+Write unit tests for the schema. Create integration tests for credit movement operations. Test transaction rollbacks to ensure data integrity. Verify that the audit trail correctly records all operations. Test concurrent operations to ensure thread safety.

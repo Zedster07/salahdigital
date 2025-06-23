@@ -1,0 +1,105 @@
+# Digital Subscription Management System Refactoring PRD
+
+## Project Overview
+Refactor the existing digital subscription management system to align with the actual business model of platform-based digital product reselling.
+
+## Current State Analysis
+The system currently uses a traditional inventory model with stock purchases and sales. The business actually operates by:
+- Subscribing to digital platforms (suppliers)
+- Depositing credits into these platforms
+- Purchasing products using platform credits
+- Reselling products to clients with profit margins
+
+## Business Requirements
+
+### 1. Platform Management System
+- Create new Platform entity to represent supplier platforms
+- Track platform details: name, description, contact information
+- Manage credit balances for each platform
+- Support credit addition and deduction operations
+- Monitor platform credit levels with low balance alerts
+
+### 2. Product-Platform Integration
+- Associate each digital product with a specific platform
+- Track buying prices per platform for products
+- Maintain product catalog with platform-specific pricing
+- Support multiple products per platform
+
+### 3. Enhanced Sales Process
+- Redesign sales workflow to include platform selection
+- Capture buying price from platform and selling price to client
+- Support payment types: one-time and recurring subscriptions
+- Handle recurring payment durations (1-12 months, custom periods)
+- Automatic profit calculation (selling price - buying price)
+
+### 4. Credit Management System
+- Automatic credit deduction from platforms when sales are completed
+- Create audit trail for all platform credit movements
+- Real-time credit balance updates
+- Credit movement history and reporting
+
+### 5. Financial Tracking & Reporting
+- Track profit per sale with platform cost basis
+- Monitor platform credit utilization
+- Generate platform profitability reports
+- Alert system for low platform credits
+- Financial dashboard with key metrics
+
+### 6. Legacy System Migration
+- Remove "Achats" (Purchases) feature completely
+- Migrate existing data to new platform-based model
+- Maintain data integrity during transition
+- Preserve historical sales data with platform associations
+
+## Technical Requirements
+
+### Database Schema Changes
+- Add platforms table with credit management
+- Modify digital_products table to include platform_id
+- Update stock_sales table for platform integration
+- Add platform_credit_movements table for audit trail
+- Remove stock_purchases related tables and references
+
+### API Endpoint Updates
+- Create platform management endpoints (CRUD operations)
+- Add credit management endpoints (add/deduct credits)
+- Update product endpoints for platform association
+- Modify sales endpoints for new workflow
+- Remove purchase-related endpoints
+
+### Frontend Component Changes
+- Create Platform management interface
+- Update Product forms for platform selection
+- Redesign Sales forms for new workflow
+- Remove Purchase-related components
+- Add credit management interface
+- Update dashboard for platform metrics
+
+### Data Migration Strategy
+- Create migration scripts for existing data
+- Map current products to default platforms
+- Preserve historical sales data
+- Clean up purchase-related data
+- Validate data integrity post-migration
+
+## Success Criteria
+- All existing sales data preserved and accessible
+- New platform-based workflow fully functional
+- Credit management system operational
+- Financial reporting accurate and comprehensive
+- System performance maintained or improved
+- Zero data loss during migration
+
+## Risk Mitigation
+- Comprehensive backup before migration
+- Staged rollout with rollback capability
+- Extensive testing of new workflows
+- User training on new interface
+- Monitoring system for post-deployment issues
+
+## Timeline Considerations
+- Database schema changes require careful planning
+- Frontend updates need user experience testing
+- Data migration requires validation checkpoints
+- Deployment should be done during low-usage periods
+- Post-deployment monitoring for 48-72 hours

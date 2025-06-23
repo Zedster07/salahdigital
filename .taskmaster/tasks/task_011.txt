@@ -1,0 +1,19 @@
+# Task ID: 11
+# Title: Redesign Sales Service for Platform Integration
+# Status: pending
+# Dependencies: 4, 6, 9
+# Priority: high
+# Description: Update the sales service to incorporate platform selection, credit deduction, and profit calculation.
+# Details:
+Modify the SalesService to:
+- Require platform selection for each sale
+- Capture buying price from the selected platform
+- Calculate profit automatically
+- Deduct credits from the platform balance
+- Support one-time and recurring payment types
+- Handle subscription durations
+
+Implement transaction management to ensure atomicity of sales operations and credit deductions. Add validation for sufficient platform credits before completing sales. Update any related services that depend on sales data.
+
+# Test Strategy:
+Write unit tests for the updated service. Test the complete sales flow including credit deduction. Verify profit calculations. Test different payment types and subscription durations. Test error scenarios like insufficient platform credits. Create integration tests for the end-to-end sales process.

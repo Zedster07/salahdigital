@@ -1,0 +1,16 @@
+# Task ID: 3
+# Title: Modify Digital Products Table for Platform Association
+# Status: pending
+# Dependencies: 1
+# Priority: high
+# Description: Update the existing digital_products table to include platform association and platform-specific pricing information.
+# Details:
+Alter the 'digital_products' table to add:
+- platform_id (foreign key to platforms.id)
+- buying_price (decimal, the cost from the platform)
+- profit_margin (decimal, optional, for automatic selling price calculation)
+
+Create a migration that adds these fields while preserving existing data. Add a foreign key constraint to ensure referential integrity. Update any existing indexes to include the new platform_id field where appropriate. Consider adding a composite unique constraint on product_code and platform_id if products can exist on multiple platforms.
+
+# Test Strategy:
+Write migration tests to verify schema changes. Test that existing data is preserved. Verify foreign key constraints work correctly. Test CRUD operations on products with platform associations. Ensure buying_price validation works correctly.

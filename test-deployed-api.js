@@ -21,9 +21,9 @@ async function testDeployedAPI() {
     // Test API endpoints
     const endpoints = [
       '/users',
-      '/subscribers', 
+      '/subscribers',
       '/digital-products',
-      '/stock-purchases',
+      // Note: '/stock-purchases' removed as part of platform migration
       '/stock-sales',
       '/stock-movements',
       '/settings'

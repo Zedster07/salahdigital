@@ -1,0 +1,18 @@
+# Task ID: 20
+# Title: Remove Purchase-Related Code and Database Tables
+# Status: pending
+# Dependencies: 19
+# Priority: medium
+# Description: Identify and remove all code and database elements related to the deprecated 'Achats' (Purchases) feature.
+# Details:
+Identify all purchase-related elements:
+- Database tables (stock_purchases, etc.)
+- Models and repositories
+- Services and controllers
+- API endpoints
+- UI components
+
+Create scripts to safely remove database tables after data migration. Remove or comment out related code. Update any dependencies that reference purchase-related components. Document all removed elements for future reference.
+
+# Test Strategy:
+Create a comprehensive inventory of purchase-related elements before removal. Test system functionality after removal to ensure no regressions. Verify that removed database tables don't break existing queries. Test that API endpoints return appropriate 404 responses. Verify UI doesn't attempt to access removed features.

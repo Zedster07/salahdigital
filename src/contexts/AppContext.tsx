@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { User, Subscriber, DigitalProduct, StockPurchase, StockSale, StockMovement, Language, AppSettings, UserManagement } from '../types';
+import { User, Subscriber, DigitalProduct, StockSale, StockMovement, Language, AppSettings, UserManagement, Platform, PlatformCreditMovement } from '../types';
 import { apiClient } from '../utils/api';
 
 interface AppState {
   user: User | null;
   subscribers: Subscriber[];
   digitalProducts: DigitalProduct[];
-  stockPurchases: StockPurchase[];
+  // Note: stockPurchases removed as part of platform migration
   stockSales: StockSale[];
   stockMovements: StockMovement[];
+  platforms: Platform[];
+  platformCreditMovements: PlatformCreditMovement[];
   settings: AppSettings;
   userManagement: UserManagement;
   isLoading: boolean;
@@ -29,16 +31,19 @@ type AppAction =
   | { type: 'UPDATE_DIGITAL_PRODUCT'; payload: DigitalProduct }
   | { type: 'DELETE_DIGITAL_PRODUCT'; payload: string }
   | { type: 'SET_DIGITAL_PRODUCTS'; payload: DigitalProduct[] }
-  | { type: 'ADD_STOCK_PURCHASE'; payload: StockPurchase }
-  | { type: 'UPDATE_STOCK_PURCHASE'; payload: StockPurchase }
-  | { type: 'DELETE_STOCK_PURCHASE'; payload: string }
-  | { type: 'SET_STOCK_PURCHASES'; payload: StockPurchase[] }
+  // Note: Stock purchase actions removed as part of platform migration
   | { type: 'ADD_STOCK_SALE'; payload: StockSale }
   | { type: 'UPDATE_STOCK_SALE'; payload: StockSale }
   | { type: 'DELETE_STOCK_SALE'; payload: string }
   | { type: 'SET_STOCK_SALES'; payload: StockSale[] }
   | { type: 'ADD_STOCK_MOVEMENT'; payload: StockMovement }
   | { type: 'SET_STOCK_MOVEMENTS'; payload: StockMovement[] }
+  | { type: 'ADD_PLATFORM'; payload: Platform }
+  | { type: 'UPDATE_PLATFORM'; payload: Platform }
+  | { type: 'DELETE_PLATFORM'; payload: string }
+  | { type: 'SET_PLATFORMS'; payload: Platform[] }
+  | { type: 'ADD_PLATFORM_CREDIT_MOVEMENT'; payload: PlatformCreditMovement }
+  | { type: 'SET_PLATFORM_CREDIT_MOVEMENTS'; payload: PlatformCreditMovement[] }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_SETTINGS'; payload: AppSettings }
   | { type: 'ADD_USER'; payload: User }
@@ -51,9 +56,11 @@ const initialState: AppState = {
   user: null,
   subscribers: [],
   digitalProducts: [],
-  stockPurchases: [],
+  // Note: stockPurchases removed as part of platform migration
   stockSales: [],
   stockMovements: [],
+  platforms: [],
+  platformCreditMovements: [],
   settings: {
     language: 'fr',
     currency: 'DZD',
@@ -179,22 +186,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     case 'SET_DIGITAL_PRODUCTS':
       return { ...state, digitalProducts: action.payload };
-    case 'ADD_STOCK_PURCHASE':
-      return { ...state, stockPurchases: [...state.stockPurchases, action.payload] };
-    case 'UPDATE_STOCK_PURCHASE':
-      return {
-        ...state,
-        stockPurchases: state.stockPurchases.map(purchase =>
-          purchase.id === action.payload.id ? action.payload : purchase
-        ),
-      };
-    case 'DELETE_STOCK_PURCHASE':
-      return {
-        ...state,
-        stockPurchases: state.stockPurchases.filter(purchase => purchase.id !== action.payload),
-      };
-    case 'SET_STOCK_PURCHASES':
-      return { ...state, stockPurchases: action.payload };
+    // Note: Stock purchase reducer cases removed as part of platform migration
     case 'ADD_STOCK_SALE':
       return { ...state, stockSales: [...state.stockSales, action.payload] };
     case 'UPDATE_STOCK_SALE':
@@ -215,6 +207,26 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, stockMovements: [...state.stockMovements, action.payload] };
     case 'SET_STOCK_MOVEMENTS':
       return { ...state, stockMovements: action.payload };
+    case 'ADD_PLATFORM':
+      return { ...state, platforms: [...state.platforms, action.payload] };
+    case 'UPDATE_PLATFORM':
+      return {
+        ...state,
+        platforms: state.platforms.map(platform =>
+          platform.id === action.payload.id ? action.payload : platform
+        ),
+      };
+    case 'DELETE_PLATFORM':
+      return {
+        ...state,
+        platforms: state.platforms.filter(platform => platform.id !== action.payload),
+      };
+    case 'SET_PLATFORMS':
+      return { ...state, platforms: action.payload };
+    case 'ADD_PLATFORM_CREDIT_MOVEMENT':
+      return { ...state, platformCreditMovements: [...state.platformCreditMovements, action.payload] };
+    case 'SET_PLATFORM_CREDIT_MOVEMENTS':
+      return { ...state, platformCreditMovements: action.payload };
     case 'UPDATE_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } };
     case 'SET_SETTINGS':
@@ -291,7 +303,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           users,
           subscribers,
           digitalProducts,
-          stockPurchases,
+          platforms,
+          // Note: stockPurchases removed as part of platform migration
           stockSales,
           stockMovements
         ] = await Promise.all([
@@ -299,7 +312,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           apiClient.getUsers(),
           apiClient.getSubscribers(),
           apiClient.getDigitalProducts(),
-          apiClient.getStockPurchases(),
+          apiClient.getPlatforms(),
+          // Note: getStockPurchases() removed
           apiClient.getStockSales(),
           apiClient.getStockMovements()
         ]);
@@ -309,7 +323,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           users: users.length,
           subscribers: subscribers.length,
           digitalProducts: digitalProducts.length,
-          stockPurchases: stockPurchases.length,
+          platforms: platforms?.data?.length || platforms?.length || 0,
+          // Note: stockPurchases removed as part of platform migration
           stockSales: stockSales.length,
           stockMovements: stockMovements.length
         });
@@ -319,7 +334,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: 'SET_USERS', payload: users });
         dispatch({ type: 'SET_SUBSCRIBERS', payload: subscribers });
         dispatch({ type: 'SET_DIGITAL_PRODUCTS', payload: digitalProducts });
-        dispatch({ type: 'SET_STOCK_PURCHASES', payload: stockPurchases });
+        dispatch({ type: 'SET_PLATFORMS', payload: platforms?.data || platforms || [] });
+        // Note: SET_STOCK_PURCHASES dispatch removed
         dispatch({ type: 'SET_STOCK_SALES', payload: stockSales });
         dispatch({ type: 'SET_STOCK_MOVEMENTS', payload: stockMovements });
         
@@ -340,7 +356,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             
             dispatch({ type: 'SET_SUBSCRIBERS', payload: parsedData.subscribers || [] });
             dispatch({ type: 'SET_DIGITAL_PRODUCTS', payload: parsedData.digitalProducts || [] });
-            dispatch({ type: 'SET_STOCK_PURCHASES', payload: parsedData.stockPurchases || [] });
+            dispatch({ type: 'SET_PLATFORMS', payload: parsedData.platforms || [] });
+            // Note: SET_STOCK_PURCHASES dispatch removed as part of platform migration
             dispatch({ type: 'SET_STOCK_SALES', payload: parsedData.stockSales || [] });
             dispatch({ type: 'SET_STOCK_MOVEMENTS', payload: parsedData.stockMovements || [] });
             if (parsedData.settings) {
@@ -376,7 +393,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const dataToSave = {
           subscribers: state.subscribers,
           digitalProducts: state.digitalProducts,
-          stockPurchases: state.stockPurchases,
+          platforms: state.platforms,
+          // Note: stockPurchases removed as part of platform migration
           stockSales: state.stockSales,
           stockMovements: state.stockMovements,
           settings: state.settings,
@@ -394,7 +412,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [
     state.subscribers,
     state.digitalProducts,
-    state.stockPurchases,
+    state.platforms,
+    // Note: state.stockPurchases removed as part of platform migration
     state.stockSales,
     state.stockMovements,
     state.settings,
@@ -488,38 +507,8 @@ export const useDatabase = () => {
       }
     },
 
-    // Stock Purchases
-    async addStockPurchase(purchaseData: StockPurchase) {
-      try {
-        const result = await apiClient.createStockPurchase(purchaseData);
-        dispatch({ type: 'ADD_STOCK_PURCHASE', payload: result });
-        return result;
-      } catch (error) {
-        console.error('Error adding stock purchase:', error);
-        throw error;
-      }
-    },
-
-    async updateStockPurchase(purchaseData: StockPurchase) {
-      try {
-        const result = await apiClient.updateStockPurchase(purchaseData);
-        dispatch({ type: 'UPDATE_STOCK_PURCHASE', payload: result });
-        return result;
-      } catch (error) {
-        console.error('Error updating stock purchase:', error);
-        throw error;
-      }
-    },
-
-    async deleteStockPurchase(purchaseId: string) {
-      try {
-        await apiClient.deleteStockPurchase(purchaseId);
-        dispatch({ type: 'DELETE_STOCK_PURCHASE', payload: purchaseId });
-      } catch (error) {
-        console.error('Error deleting stock purchase:', error);
-        throw error;
-      }
-    },
+    // Note: Stock Purchases methods removed as part of platform migration
+    // The system now uses platform-based credit management instead
 
     // Stock Sales
     async addStockSale(saleData: StockSale) {

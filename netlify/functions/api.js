@@ -672,6 +672,25 @@ const dbOperations = {
     try {
       await client.query('BEGIN');
 
+      // First, let's check what columns actually exist in the stock_sales table
+      const tableInfo = await client.query(`
+        SELECT column_name, data_type, is_nullable
+        FROM information_schema.columns
+        WHERE table_name = 'stock_sales'
+        ORDER BY ordinal_position
+      `);
+      console.log('=== STOCK_SALES TABLE SCHEMA ===');
+      console.log(tableInfo.rows);
+
+      // Also check if the table exists at all
+      const tableExists = await client.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables
+          WHERE table_name = 'stock_sales'
+        )
+      `);
+      console.log('Table exists:', tableExists.rows[0].exists);
+
       // Validate platform and check credit balance if platform is specified (Task 11)
       if (saleData.platformId) {
         const platformCheck = await client.query('SELECT id, credit_balance, is_active FROM platforms WHERE id = $1', [saleData.platformId]);
@@ -702,7 +721,15 @@ const dbOperations = {
       }
 
       const id = saleData.id || generateId();
-      
+      const query = `
+        INSERT INTO stock_sales (id, product_id, product_name, subscriber_id, customer_name, customer_phone,
+                               quantity, unit_price, total_price, sale_date, payment_method, payment_status,
+                               paid_amount, remaining_amount, profit, platform_id, platform_buying_price,
+                               payment_type, subscription_duration, subscription_start_date, subscription_end_date,
+                               notes, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, CURRENT_TIMESTAMP)
+        RETURNING *
+      `;
       // Calculate remaining amount based on payment status
       const paymentStatus = saleData.paymentStatus || 'pending';
       const paidAmount = saleData.paidAmount || 0;
@@ -717,61 +744,59 @@ const dbOperations = {
         remainingAmount = totalPrice - paidAmount;
       }
 
-      // Use fixed parameter approach to ensure consistent parameter ordering
-      const query = `
-        INSERT INTO stock_sales (
-          id, product_id, product_name, subscriber_id, customer_name, customer_phone,
-          quantity, unit_price, total_price, sale_date, payment_method, payment_status,
-          paid_amount, remaining_amount, profit, platform_id, platform_buying_price,
-          payment_type, subscription_duration, subscription_start_date, subscription_end_date,
-          notes, created_at
-        )
-        VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, CURRENT_TIMESTAMP
-        )
-        RETURNING *
-      `;
-
+      // Ensure proper type conversion for PostgreSQL
       const values = [
-        id,                                                           // $1
-        saleData.productId,                                          // $2
-        saleData.productName,                                        // $3
-        saleData.subscriberId || null,                               // $4
-        saleData.customerName || null,                               // $5
-        saleData.customerPhone || null,                              // $6
-        parseInt(saleData.quantity, 10) || 1,                       // $7
-        parseFloat(saleData.unitPrice) || 0,                        // $8
-        parseFloat(totalPrice) || 0,                                // $9
-        saleData.saleDate || new Date().toISOString(),              // $10
-        saleData.paymentMethod || 'cash',                           // $11
-        paymentStatus,                                               // $12
-        parseFloat(paidAmount) || 0,                                // $13
-        parseFloat(remainingAmount) || 0,                           // $14
-        parseFloat(saleData.profit || 0),                           // $15
-        saleData.platformId || null,                                // $16
-        parseFloat(saleData.platformBuyingPrice || 0),              // $17
-        saleData.paymentType || 'one-time',                         // $18
-        saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null, // $19
-        subscriptionStartDate,                                       // $20
-        subscriptionEndDate,                                         // $21
-        saleData.notes || null                                       // $22
+        String(id),                                           // $1: VARCHAR
+        String(saleData.productId),                          // $2: VARCHAR
+        String(saleData.productName),                        // $3: VARCHAR
+        saleData.subscriberId ? String(saleData.subscriberId) : null,  // $4: VARCHAR
+        saleData.customerName ? String(saleData.customerName) : null,  // $5: VARCHAR
+        saleData.customerPhone ? String(saleData.customerPhone) : null, // $6: VARCHAR
+        parseInt(saleData.quantity, 10),                     // $7: INTEGER
+        parseFloat(saleData.unitPrice),                      // $8: DECIMAL
+        parseFloat(totalPrice),                              // $9: DECIMAL
+        saleData.saleDate,                                   // $10: TIMESTAMP
+        String(saleData.paymentMethod),                      // $11: VARCHAR
+        String(paymentStatus),                               // $12: VARCHAR
+        parseFloat(paidAmount),                              // $13: DECIMAL
+        parseFloat(remainingAmount),                         // $14: DECIMAL
+        parseFloat(saleData.profit || 0),                    // $15: DECIMAL
+        saleData.platformId ? String(saleData.platformId) : null,      // $16: VARCHAR
+        parseFloat(saleData.platformBuyingPrice || 0),       // $17: DECIMAL
+        String(saleData.paymentType || 'one-time'),          // $18: VARCHAR
+        saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null, // $19: INTEGER
+        subscriptionStartDate,                               // $20: TIMESTAMP
+        subscriptionEndDate,                                 // $21: TIMESTAMP
+        saleData.notes ? String(saleData.notes) : null       // $22: TEXT
       ];
 
-      // Debug logging
+      // Debug logging with detailed value inspection
       console.log('=== STOCK SALE CREATION DEBUG ===');
+      console.log('Original saleData:', JSON.stringify(saleData, null, 2));
       console.log('Query:', query);
-      console.log('Values:', values);
-      console.log('Values length:', values.length);
-      
-      // Type check each parameter
+      console.log('Values array length:', values.length);
+
+      // Check each value individually
       values.forEach((value, index) => {
-        console.log(`$${index + 1}:`, {
+        console.log(`Parameter $${index + 1}:`, {
           value: value,
           type: typeof value,
           isNull: value === null,
+          isUndefined: value === undefined,
           constructor: value?.constructor?.name
         });
       });
+
+      // Try a simpler query first to test basic insertion
+      try {
+        console.log('Testing basic table access...');
+        const testQuery = 'SELECT COUNT(*) FROM stock_sales';
+        const testResult = await client.query(testQuery);
+        console.log('Table access test successful, row count:', testResult.rows[0].count);
+      } catch (testError) {
+        console.error('Basic table access failed:', testError);
+        throw new Error(`Table access failed: ${testError.message}`);
+      }
 
       const result = await client.query(query, values);
 

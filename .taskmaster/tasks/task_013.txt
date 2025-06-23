@@ -1,0 +1,17 @@
+# Task ID: 13
+# Title: Implement Financial Reporting Service
+# Status: pending
+# Dependencies: 6, 11
+# Priority: medium
+# Description: Create a service for generating financial reports related to platform profitability and credit utilization.
+# Details:
+Implement a FinancialReportingService with methods:
+- getPlatformProfitability(platformId, dateRange)
+- getCreditUtilization(platformId, dateRange)
+- getSalesProfitReport(filters)
+- getLowCreditPlatforms(threshold)
+
+Implement efficient query strategies using aggregation functions. Consider using database views for complex reports. Support various filtering options including date ranges, platforms, and products. Implement caching for frequently accessed reports. Use data transformation to format report data appropriately.
+
+# Test Strategy:
+Write unit tests for reporting methods. Create test fixtures with known financial outcomes. Verify report calculations match expected results. Test with various filter combinations. Test performance with large datasets. Create integration tests for the complete reporting flow.

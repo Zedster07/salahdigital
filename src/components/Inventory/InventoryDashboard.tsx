@@ -15,17 +15,22 @@ export function InventoryDashboard() {
   const { digitalProducts, stockPurchases, stockSales, settings } = state;
 
   const stats = React.useMemo(() => {
-    const totalProducts = digitalProducts.length;
-    const totalStock = digitalProducts.reduce((sum, product) => sum + product.currentStock, 0);
-    const lowStockProducts = digitalProducts.filter(product => 
+    // Add defensive programming to handle undefined arrays
+    const safeDigitalProducts = digitalProducts || [];
+    const safeStockPurchases = stockPurchases || [];
+    const safeStockSales = stockSales || [];
+
+    const totalProducts = safeDigitalProducts.length;
+    const totalStock = safeDigitalProducts.reduce((sum, product) => sum + product.currentStock, 0);
+    const lowStockProducts = safeDigitalProducts.filter(product =>
       product.currentStock <= product.minStockAlert
     ).length;
-    
-    const totalPurchaseValue = stockPurchases.reduce((sum, purchase) => sum + purchase.totalCost, 0);
-    const totalSalesValue = stockSales.reduce((sum, sale) => sum + sale.totalPrice, 0);
-    const totalProfit = stockSales.reduce((sum, sale) => sum + sale.profit, 0);
-    
-    const currentStockValue = digitalProducts.reduce((sum, product) => 
+
+    const totalPurchaseValue = safeStockPurchases.reduce((sum, purchase) => sum + purchase.totalCost, 0);
+    const totalSalesValue = safeStockSales.reduce((sum, sale) => sum + sale.totalPrice, 0);
+    const totalProfit = safeStockSales.reduce((sum, sale) => sum + sale.profit, 0);
+
+    const currentStockValue = safeDigitalProducts.reduce((sum, product) =>
       sum + (product.currentStock * product.averagePurchasePrice), 0
     );
 
@@ -79,15 +84,15 @@ export function InventoryDashboard() {
     },
   ];
 
-  const recentPurchases = stockPurchases
+  const recentPurchases = (stockPurchases || [])
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  const recentSales = stockSales
+  const recentSales = (stockSales || [])
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 
-  const lowStockProducts = digitalProducts.filter(product => 
+  const lowStockProducts = (digitalProducts || []).filter(product =>
     product.currentStock <= product.minStockAlert
   );
 

@@ -1,5 +1,4 @@
-import pg from 'pg';
-const { Pool } = pg;
+const { Pool } = require('pg');
 
 let pool;
 let initError = null;
@@ -88,29 +87,59 @@ const initSchema = async () => {
         min_stock_alert INTEGER DEFAULT 5,
         average_purchase_price DECIMAL(10,2) DEFAULT 0,
         suggested_sell_price DECIMAL(10,2) DEFAULT 0,
+        platform_id VARCHAR(255) REFERENCES platforms(id) ON DELETE SET NULL,
+        platform_buying_price DECIMAL(10,2) DEFAULT 0 CHECK (platform_buying_price >= 0),
+        profit_margin DECIMAL(5,2) DEFAULT 30.00 CHECK (profit_margin >= 0),
         is_active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
+    // Add missing columns to digital_products table if they don't exist (for existing databases)
+    try {
+      await client.query(`
+        ALTER TABLE digital_products
+        ADD COLUMN IF NOT EXISTS average_purchase_price DECIMAL(10,2) DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS platform_buying_price DECIMAL(10,2) DEFAULT 0 CHECK (platform_buying_price >= 0),
+        ADD COLUMN IF NOT EXISTS profit_margin DECIMAL(5,2) DEFAULT 30.00 CHECK (profit_margin >= 0);
+      `);
+      console.log('Digital products table columns updated successfully');
+    } catch (alterError) {
+      console.log('Note: Some columns may already exist in digital_products table:', alterError.message);
+    }
+
+    // Create platforms table FIRST (before stock_sales) to avoid foreign key issues
     await client.query(`
-      CREATE TABLE IF NOT EXISTS stock_purchases (
+      CREATE TABLE IF NOT EXISTS platforms (
         id VARCHAR(255) PRIMARY KEY,
-        product_id VARCHAR(255) REFERENCES digital_products(id) ON DELETE CASCADE,
-        product_name VARCHAR(255) NOT NULL,
-        supplier VARCHAR(255) NOT NULL,
-        quantity INTEGER NOT NULL,
-        unit_cost DECIMAL(10,2) NOT NULL,
-        total_cost DECIMAL(10,2) NOT NULL,
-        purchase_date TIMESTAMP NOT NULL,
-        payment_method VARCHAR(50) NOT NULL,
-        payment_status VARCHAR(50) NOT NULL DEFAULT 'pending',
-        invoice_number VARCHAR(255),
-        notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        name VARCHAR(255) NOT NULL UNIQUE,
+        description TEXT,
+        contact_name VARCHAR(255),
+        contact_email VARCHAR(255),
+        contact_phone VARCHAR(255),
+        credit_balance DECIMAL(10,2) DEFAULT 0 CHECK (credit_balance >= 0),
+        low_balance_threshold DECIMAL(10,2) DEFAULT 100,
+        is_active BOOLEAN DEFAULT true,
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Now add platform_id to digital_products after platforms table exists
+    try {
+      await client.query(`
+        ALTER TABLE digital_products
+        ADD COLUMN IF NOT EXISTS platform_id VARCHAR(255) REFERENCES platforms(id) ON DELETE SET NULL;
+      `);
+      console.log('Digital products platform_id column added successfully');
+    } catch (alterError) {
+      console.log('Note: platform_id column may already exist in digital_products table:', alterError.message);
+    }
+
+    // Note: stock_purchases table removed as part of platform migration
+    // The system now uses platform-based credit management instead of direct purchases
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS stock_sales (
@@ -129,10 +158,57 @@ const initSchema = async () => {
         paid_amount DECIMAL(10,2) DEFAULT 0,
         remaining_amount DECIMAL(10,2) DEFAULT 0,
         profit DECIMAL(10,2) DEFAULT 0,
+        platform_id VARCHAR(255) REFERENCES platforms(id) ON DELETE SET NULL,
+        platform_buying_price DECIMAL(10,2) DEFAULT 0 CHECK (platform_buying_price >= 0),
+        payment_type VARCHAR(50) DEFAULT 'one-time' CHECK (payment_type IN ('one-time', 'recurring')),
+        subscription_duration INTEGER CHECK (subscription_duration > 0),
+        subscription_start_date TIMESTAMP,
+        subscription_end_date TIMESTAMP,
         notes TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT check_recurring_subscription
+        CHECK (
+          (payment_type = 'one-time' AND subscription_duration IS NULL) OR
+          (payment_type = 'recurring' AND subscription_duration IS NOT NULL AND subscription_duration > 0)
+        )
       );
     `);
+
+    // Add missing columns to stock_sales table if they don't exist (for existing databases)
+    try {
+      await client.query(`
+        ALTER TABLE stock_sales
+        ADD COLUMN IF NOT EXISTS platform_id VARCHAR(255) REFERENCES platforms(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS platform_buying_price DECIMAL(10,2) DEFAULT 0 CHECK (platform_buying_price >= 0),
+        ADD COLUMN IF NOT EXISTS payment_type VARCHAR(50) DEFAULT 'one-time',
+        ADD COLUMN IF NOT EXISTS subscription_duration INTEGER,
+        ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP,
+        ADD COLUMN IF NOT EXISTS notes TEXT;
+      `);
+
+      // Add constraint for payment_type if it doesn't exist
+      await client.query(`
+        ALTER TABLE stock_sales
+        DROP CONSTRAINT IF EXISTS check_payment_type,
+        ADD CONSTRAINT check_payment_type CHECK (payment_type IN ('one-time', 'recurring'));
+      `);
+
+      // Add constraint for recurring subscription if it doesn't exist
+      await client.query(`
+        ALTER TABLE stock_sales
+        DROP CONSTRAINT IF EXISTS check_recurring_subscription,
+        ADD CONSTRAINT check_recurring_subscription
+        CHECK (
+          (payment_type = 'one-time' AND subscription_duration IS NULL) OR
+          (payment_type = 'recurring' AND subscription_duration IS NOT NULL AND subscription_duration > 0)
+        );
+      `);
+
+      console.log('Stock sales table columns updated successfully');
+    } catch (alterError) {
+      console.log('Note: Some columns may already exist in stock_sales table:', alterError.message);
+    }
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS stock_movements (
@@ -153,6 +229,24 @@ const initSchema = async () => {
         id VARCHAR(255) PRIMARY KEY DEFAULT 'main',
         settings JSONB NOT NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Platforms table already created above to avoid foreign key issues
+
+    // Create platform credit movements table for audit trail
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS platform_credit_movements (
+        id VARCHAR(255) PRIMARY KEY,
+        platform_id VARCHAR(255) NOT NULL REFERENCES platforms(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL CHECK (type IN ('credit_added', 'credit_deducted', 'sale_deduction', 'adjustment')),
+        amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+        previous_balance DECIMAL(10,2) NOT NULL,
+        new_balance DECIMAL(10,2) NOT NULL,
+        reference VARCHAR(255),
+        description TEXT,
+        created_by VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
@@ -177,11 +271,24 @@ const initSchema = async () => {
       CREATE INDEX IF NOT EXISTS idx_subscribers_name ON subscribers(name);
       CREATE INDEX IF NOT EXISTS idx_stock_sales_date ON stock_sales(sale_date);
       CREATE INDEX IF NOT EXISTS idx_stock_sales_status ON stock_sales(payment_status);
-      CREATE INDEX IF NOT EXISTS idx_stock_purchases_date ON stock_purchases(purchase_date);
+      CREATE INDEX IF NOT EXISTS idx_sales_platform ON stock_sales(platform_id);
+      CREATE INDEX IF NOT EXISTS idx_sales_payment_type ON stock_sales(payment_type);
+      CREATE INDEX IF NOT EXISTS idx_sales_subscription_dates ON stock_sales(subscription_start_date, subscription_end_date);
+      CREATE INDEX IF NOT EXISTS idx_sales_platform_date ON stock_sales(platform_id, sale_date);
+      -- Note: idx_stock_purchases_date removed as stock_purchases table no longer exists
       CREATE INDEX IF NOT EXISTS idx_digital_products_category ON digital_products(category);
       CREATE INDEX IF NOT EXISTS idx_digital_products_active ON digital_products(is_active);
+      CREATE INDEX IF NOT EXISTS idx_products_platform ON digital_products(platform_id);
+      CREATE INDEX IF NOT EXISTS idx_products_platform_active ON digital_products(platform_id, is_active);
       CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);
       CREATE INDEX IF NOT EXISTS idx_payment_history_sale ON payment_history(sale_id);
+      CREATE INDEX IF NOT EXISTS idx_platforms_name ON platforms(name);
+      CREATE INDEX IF NOT EXISTS idx_platforms_active ON platforms(is_active);
+      CREATE INDEX IF NOT EXISTS idx_platforms_credit_balance ON platforms(credit_balance);
+      CREATE INDEX IF NOT EXISTS idx_credit_movements_platform ON platform_credit_movements(platform_id);
+      CREATE INDEX IF NOT EXISTS idx_credit_movements_type ON platform_credit_movements(type);
+      CREATE INDEX IF NOT EXISTS idx_credit_movements_date ON platform_credit_movements(created_at);
+      CREATE INDEX IF NOT EXISTS idx_credit_movements_reference ON platform_credit_movements(reference);
     `);
 
     // Insert default admin user if not exists
@@ -189,6 +296,13 @@ const initSchema = async () => {
       INSERT INTO users (id, username, email, role, status, email_verified, created_at)
       VALUES ('admin', 'admin', 'admin@digitalmanager.com', 'admin', 'verified', true, CURRENT_TIMESTAMP)
       ON CONFLICT (username) DO NOTHING;
+    `);
+
+    // Insert default platform for existing data migration
+    await client.query(`
+      INSERT INTO platforms (id, name, description, credit_balance, low_balance_threshold, is_active, created_at, updated_at)
+      VALUES ('default-platform', 'Default Platform', 'Default platform for migrated products and existing data', 0, 100, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO NOTHING;
     `);
 
     // Insert default settings if not exists
@@ -248,7 +362,7 @@ const initSchema = async () => {
   }
 };
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Set CORS headers
   const headers = {
     'Access-Control-Allow-Origin': '*',

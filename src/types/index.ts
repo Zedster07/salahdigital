@@ -41,26 +41,16 @@ export interface DigitalProduct {
   minStockAlert: number;
   averagePurchasePrice: number;
   suggestedSellPrice: number;
+  platformId?: string; // Reference to platform
+  platformBuyingPrice: number; // Cost from platform
+  profitMargin: number; // Profit margin percentage
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface StockPurchase {
-  id: string;
-  productId: string;
-  productName: string;
-  supplier: string;
-  quantity: number;
-  unitCost: number;
-  totalCost: number;
-  purchaseDate: string;
-  paymentMethod: 'cash' | 'transfer' | 'baridimob' | 'other';
-  paymentStatus: 'paid' | 'pending' | 'partial';
-  invoiceNumber?: string;
-  notes?: string;
-  createdAt: string;
-}
+// Note: StockPurchase interface removed as part of platform migration
+// The system now uses platform-based credit management instead
 
 export interface PaymentHistoryEntry {
   id: string;
@@ -86,6 +76,12 @@ export interface StockSale {
   paidAmount?: number;
   remainingAmount?: number;
   profit: number;
+  platformId?: string; // Reference to platform
+  platformBuyingPrice: number; // Cost from platform at time of sale
+  paymentType: 'one-time' | 'recurring'; // Payment type
+  subscriptionDuration?: number; // Duration in months for recurring payments
+  subscriptionStartDate?: string; // Start date for subscriptions
+  subscriptionEndDate?: string; // End date for subscriptions
   notes?: string;
   paymentHistory?: PaymentHistoryEntry[];
   createdAt: string;
@@ -202,4 +198,33 @@ export interface SecurityLog {
   userAgent?: string;
   timestamp: string;
   details?: string;
+}
+
+// Platform Management - New entities for supplier platform management
+export interface Platform {
+  id: string;
+  name: string;
+  description?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  creditBalance: number;
+  lowBalanceThreshold: number;
+  isActive: boolean;
+  metadata?: Record<string, any>; // JSON field for extensibility
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlatformCreditMovement {
+  id: string;
+  platformId: string;
+  type: 'credit_added' | 'credit_deducted' | 'sale_deduction' | 'adjustment';
+  amount: number;
+  previousBalance: number;
+  newBalance: number;
+  reference?: string; // Reference to sale ID or manual operation
+  description?: string;
+  createdBy?: string; // User who performed the operation
+  createdAt: string;
 }

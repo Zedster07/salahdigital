@@ -1,0 +1,361 @@
+name: Deploy Digital Manager
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '18'
+  NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+  NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+jobs:
+  # Quality checks and testing
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Generate test coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./tests/reports/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: tests/reports/
+
+  # Security and quality scanning
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+      - name: Run dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'Digital Manager'
+          path: '.'
+          format: 'ALL'
+
+      - name: Upload dependency check results
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: reports/
+
+  # Build application
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          REACT_APP_VERSION: ${{ github.sha }}
+          REACT_APP_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-files
+          path: dist/
+          retention-days: 30
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-files
+          path: dist/
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Deploy to Netlify Staging
+        run: |
+          netlify deploy \
+            --dir=dist \
+            --site=${{ secrets.NETLIFY_STAGING_SITE_ID }} \
+            --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} \
+            --message="Deploy from GitHub Actions - ${{ github.sha }}"
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_STAGING_SITE_ID }}
+
+      - name: Run staging tests
+        run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.STAGING_URL }}
+
+      - name: Comment PR with staging URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Staging deployment successful!\n\n**Preview URL:** ${{ secrets.STAGING_URL }}\n**Commit:** ${{ github.sha }}'
+            })
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-files
+          path: dist/
+
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      - name: Create database backup
+        run: npm run db:backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run database migrations
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Deploy to Netlify Production
+        run: |
+          netlify deploy \
+            --prod \
+            --dir=dist \
+            --site=${{ secrets.NETLIFY_SITE_ID }} \
+            --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} \
+            --message="Production deploy from GitHub Actions - ${{ github.sha }}"
+
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Run production health checks
+        run: npm run health:check
+        env:
+          HEALTH_CHECK_URL: ${{ secrets.PRODUCTION_URL }}
+
+      - name: Run production smoke tests
+        run: npm run test:smoke
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.PRODUCTION_URL }}
+
+      - name: Monitor deployment
+        run: npm run monitor:deployment
+        env:
+          MONITORING_URL: ${{ secrets.PRODUCTION_URL }}
+        timeout-minutes: 10
+
+      - name: Notify deployment success
+        if: success()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment.id,
+              state: 'success',
+              environment_url: '${{ secrets.PRODUCTION_URL }}',
+              description: 'Production deployment successful'
+            })
+
+      - name: Rollback on failure
+        if: failure()
+        run: npm run deploy:rollback
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+
+  # Performance monitoring
+  performance:
+    name: Performance Monitoring
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Lighthouse CI
+        run: npm run test:performance
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+
+  # Notification and cleanup
+  notify:
+    name: Notify and Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-production, performance]
+    if: always()
+    
+    steps:
+      - name: Notify Slack on success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          text: |
+            🎉 Digital Manager deployed successfully to production!
+            
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+            **URL:** ${{ secrets.PRODUCTION_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          channel: '#deployments'
+          text: |
+            ❌ Digital Manager deployment failed!
+            
+            **Commit:** ${{ github.sha }}
+            **Author:** ${{ github.actor }}
+            **Workflow:** ${{ github.workflow }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Clean up old deployments
+        run: |
+          # Keep only last 10 deployments
+          netlify api listSiteDeploys --site-id=${{ secrets.NETLIFY_SITE_ID }} | \
+          jq -r '.[10:] | .[] | .id' | \
+          xargs -I {} netlify api deleteSiteDeploy --site-id=${{ secrets.NETLIFY_SITE_ID }} --deploy-id={}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}

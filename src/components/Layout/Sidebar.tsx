@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  Warehouse
+  Warehouse,
+  CreditCard
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,13 +30,14 @@ export function Sidebar({ activeView, onViewChange, isOpen, onToggle }: SidebarP
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard', settings.language) },
     { id: 'subscribers', icon: Users, label: 'Base de Données Clients' },
-    { 
-      id: 'inventory', 
-      icon: Warehouse, 
+    { id: 'platforms', icon: CreditCard, label: 'Gestion des Plateformes' },
+    {
+      id: 'inventory',
+      icon: Warehouse,
       label: 'Gestion de Stock',
       submenu: [
         { id: 'products', icon: Package, label: 'Articles (Produits)' },
-        { id: 'purchases', icon: ShoppingCart, label: 'Achats de Stock' },
+        // Note: Purchases removed - now using platform-based credit management
         { id: 'sales', icon: TrendingUp, label: 'Ventes de Stock' },
       ]
     },

@@ -1,0 +1,16 @@
+# Task ID: 12
+# Title: Update Sales API Endpoints
+# Status: pending
+# Dependencies: 8, 11
+# Priority: high
+# Description: Modify existing sales API endpoints to support the new platform-based workflow.
+# Details:
+Update the following API endpoints:
+- POST /api/sales - Add platform selection and payment type
+- GET /api/sales - Include platform and profit information
+- GET /api/sales/:id - Include detailed platform and profit data
+
+Update request validation for new required fields. Modify response structures to include platform and profit information. Update error handling for platform-specific errors like insufficient credits. Update documentation to reflect changes.
+
+# Test Strategy:
+Update API tests to verify platform-related functionality. Test the complete sales flow through the API. Verify platform credit deduction works correctly. Test different payment types and subscription durations. Test error scenarios and verify appropriate error responses.

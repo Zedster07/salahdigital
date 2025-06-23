@@ -8,9 +8,10 @@ import { Sidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { SubscribersList } from './components/Subscribers/SubscribersList';
+import { PlatformManagement } from './components/Platforms/PlatformManagement';
 import { InventoryDashboard } from './components/Inventory/InventoryDashboard';
 import { ProductsList } from './components/Inventory/ProductsList';
-import { PurchasesList } from './components/Inventory/PurchasesList';
+// Note: PurchasesList removed as part of platform migration
 import { SalesList } from './components/Inventory/SalesList';
 import { FinancialReports } from './components/Reports/FinancialReports';
 import { Settings } from './components/Settings/Settings';
@@ -73,6 +74,8 @@ function App() {
         return t('dashboard', state.settings.language);
       case 'subscribers':
         return 'Base de Données Clients';
+      case 'platforms':
+        return 'Gestion des Plateformes';
       case 'inventory':
         return 'Gestion de Stock';
       case 'products':
@@ -96,12 +99,15 @@ function App() {
         return <Dashboard />;
       case 'subscribers':
         return <SubscribersList />;
+      case 'platforms':
+        return <PlatformManagement />;
       case 'inventory':
         return <InventoryDashboard />;
       case 'products':
         return <ProductsList />;
       case 'purchases':
-        return <PurchasesList />;
+        // Note: Purchases feature removed - redirect to products
+        return <ProductsList />;
       case 'sales':
         return <SalesList />;
       case 'reports':

@@ -8,7 +8,7 @@ async function testAPI() {
     { path: '/users', name: 'Users' },
     { path: '/subscribers', name: 'Subscribers' },
     { path: '/digital-products', name: 'Digital Products' },
-    { path: '/stock-purchases', name: 'Stock Purchases' },
+    // Note: Stock Purchases endpoint removed as part of platform migration
     { path: '/stock-sales', name: 'Stock Sales' },
     { path: '/stock-movements', name: 'Stock Movements' },
     { path: '/settings', name: 'Settings' }

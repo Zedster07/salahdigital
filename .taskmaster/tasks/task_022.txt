@@ -1,0 +1,17 @@
+# Task ID: 22
+# Title: Create System-Wide Search for Platform-Related Entities
+# Status: pending
+# Dependencies: 10, 12, 14
+# Priority: low
+# Description: Implement a search functionality that allows users to find products, sales, and credit movements across platforms.
+# Details:
+Implement a search service that:
+- Searches across platforms, products, and sales
+- Supports filtering by entity type
+- Includes platform-specific attributes in search results
+- Provides relevant context for each result
+
+Consider using Elasticsearch or a similar search engine for efficient full-text search. Implement proper indexing strategies. Create a unified search API endpoint. Design a user-friendly search interface with typeahead suggestions.
+
+# Test Strategy:
+Test search functionality with various query patterns. Verify search results match expected entities. Test performance with large datasets. Test filtering and sorting options. Create integration tests for the complete search flow.

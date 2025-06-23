@@ -46,10 +46,12 @@ const apiPath = path.join(__dirname, 'src', 'utils', 'api.ts');
 if (fs.existsSync(apiPath)) {
   const content = fs.readFileSync(apiPath, 'utf8');
   
-  console.log(content.includes('createStockPurchase') ? '✅ Has createStockPurchase method' : '❌ Missing createStockPurchase');
+  // Note: createStockPurchase method removed as part of platform migration
+  console.log(!content.includes('createStockPurchase') ? '✅ Stock purchase methods properly removed' : '❌ Stock purchase methods still present');
   console.log(content.includes('createStockSale') ? '✅ Has createStockSale method' : '❌ Missing createStockSale');
   console.log(content.includes('createStockMovement') ? '✅ Has createStockMovement method' : '❌ Missing createStockMovement');
-  console.log(content.includes('/api/stock-purchases') ? '✅ Has stock-purchases endpoint' : '❌ Missing stock-purchases endpoint');
+  // Note: stock-purchases endpoint removed as part of platform migration
+  console.log(!content.includes('/api/stock-purchases') ? '✅ Stock purchases endpoint properly removed' : '❌ Stock purchases endpoint still present');
   console.log(content.includes('/api/stock-sales') ? '✅ Has stock-sales endpoint' : '❌ Missing stock-sales endpoint');
 }
 
