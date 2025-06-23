@@ -672,25 +672,6 @@ const dbOperations = {
     try {
       await client.query('BEGIN');
 
-      // First, let's check what columns actually exist in the stock_sales table
-      const tableInfo = await client.query(`
-        SELECT column_name, data_type, is_nullable
-        FROM information_schema.columns
-        WHERE table_name = 'stock_sales'
-        ORDER BY ordinal_position
-      `);
-      console.log('=== STOCK_SALES TABLE SCHEMA ===');
-      console.log(tableInfo.rows);
-
-      // Also check if the table exists at all
-      const tableExists = await client.query(`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables
-          WHERE table_name = 'stock_sales'
-        )
-      `);
-      console.log('Table exists:', tableExists.rows[0].exists);
-
       // Validate platform and check credit balance if platform is specified (Task 11)
       if (saleData.platformId) {
         const platformCheck = await client.query('SELECT id, credit_balance, is_active FROM platforms WHERE id = $1', [saleData.platformId]);
@@ -736,70 +717,61 @@ const dbOperations = {
         remainingAmount = totalPrice - paidAmount;
       }
 
-      // Try a simpler query approach to avoid the type inference issue
-      const insertData = {
-        id: id,
-        product_id: saleData.productId,
-        product_name: saleData.productName,
-        subscriber_id: saleData.subscriberId || null,
-        customer_name: saleData.customerName || null,
-        customer_phone: saleData.customerPhone || null,
-        quantity: parseInt(saleData.quantity, 10) || 1,
-        unit_price: parseFloat(saleData.unitPrice) || 0,
-        total_price: parseFloat(totalPrice) || 0,
-        sale_date: saleData.saleDate || new Date().toISOString(),
-        payment_method: saleData.paymentMethod || 'cash',
-        payment_status: paymentStatus,
-        paid_amount: parseFloat(paidAmount) || 0,
-        remaining_amount: parseFloat(remainingAmount) || 0,
-        profit: parseFloat(saleData.profit || 0),
-        platform_id: saleData.platformId || null,
-        platform_buying_price: parseFloat(saleData.platformBuyingPrice || 0),
-        payment_type: saleData.paymentType || 'one-time',
-        subscription_duration: saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null,
-        subscription_start_date: subscriptionStartDate,
-        subscription_end_date: subscriptionEndDate,
-        notes: saleData.notes || null
-      };
-
-      // Build the query dynamically to avoid parameter type inference issues
-      const columns = Object.keys(insertData).join(', ');
-      const placeholders = Object.keys(insertData).map((_, index) => `$${index + 1}`).join(', ');
-      const values = Object.values(insertData);
-      
+      // Use fixed parameter approach to ensure consistent parameter ordering
       const query = `
-        INSERT INTO stock_sales (${columns}, created_at)
-        VALUES (${placeholders}, CURRENT_TIMESTAMP)
+        INSERT INTO stock_sales (
+          id, product_id, product_name, subscriber_id, customer_name, customer_phone,
+          quantity, unit_price, total_price, sale_date, payment_method, payment_status,
+          paid_amount, remaining_amount, profit, platform_id, platform_buying_price,
+          payment_type, subscription_duration, subscription_start_date, subscription_end_date,
+          notes, created_at
+        )
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, CURRENT_TIMESTAMP
+        )
         RETURNING *
       `;
 
-      // Debug logging with detailed value inspection
-      console.log('=== STOCK SALE CREATION DEBUG ===');
-      console.log('Original saleData:', JSON.stringify(saleData, null, 2));
-      console.log('Query:', query);
-      console.log('Values array length:', values.length);
+      const values = [
+        id,                                                           // $1
+        saleData.productId,                                          // $2
+        saleData.productName,                                        // $3
+        saleData.subscriberId || null,                               // $4
+        saleData.customerName || null,                               // $5
+        saleData.customerPhone || null,                              // $6
+        parseInt(saleData.quantity, 10) || 1,                       // $7
+        parseFloat(saleData.unitPrice) || 0,                        // $8
+        parseFloat(totalPrice) || 0,                                // $9
+        saleData.saleDate || new Date().toISOString(),              // $10
+        saleData.paymentMethod || 'cash',                           // $11
+        paymentStatus,                                               // $12
+        parseFloat(paidAmount) || 0,                                // $13
+        parseFloat(remainingAmount) || 0,                           // $14
+        parseFloat(saleData.profit || 0),                           // $15
+        saleData.platformId || null,                                // $16
+        parseFloat(saleData.platformBuyingPrice || 0),              // $17
+        saleData.paymentType || 'one-time',                         // $18
+        saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null, // $19
+        subscriptionStartDate,                                       // $20
+        subscriptionEndDate,                                         // $21
+        saleData.notes || null                                       // $22
+      ];
 
-      // Check each value individually
+      // Debug logging
+      console.log('=== STOCK SALE CREATION DEBUG ===');
+      console.log('Query:', query);
+      console.log('Values:', values);
+      console.log('Values length:', values.length);
+      
+      // Type check each parameter
       values.forEach((value, index) => {
-        console.log(`Parameter $${index + 1}:`, {
+        console.log(`$${index + 1}:`, {
           value: value,
           type: typeof value,
           isNull: value === null,
-          isUndefined: value === undefined,
           constructor: value?.constructor?.name
         });
       });
-
-      // Try a simpler query first to test basic insertion
-      try {
-        console.log('Testing basic table access...');
-        const testQuery = 'SELECT COUNT(*) FROM stock_sales';
-        const testResult = await client.query(testQuery);
-        console.log('Table access test successful, row count:', testResult.rows[0].count);
-      } catch (testError) {
-        console.error('Basic table access failed:', testError);
-        throw new Error(`Table access failed: ${testError.message}`);
-      }
 
       const result = await client.query(query, values);
 
