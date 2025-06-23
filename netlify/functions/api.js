@@ -721,15 +721,7 @@ const dbOperations = {
       }
 
       const id = saleData.id || generateId();
-      const query = `
-        INSERT INTO stock_sales (id, product_id, product_name, subscriber_id, customer_name, customer_phone,
-                               quantity, unit_price, total_price, sale_date, payment_method, payment_status,
-                               paid_amount, remaining_amount, profit, platform_id, platform_buying_price,
-                               payment_type, subscription_duration, subscription_start_date, subscription_end_date,
-                               notes, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, CURRENT_TIMESTAMP)
-        RETURNING *
-      `;
+      
       // Calculate remaining amount based on payment status
       const paymentStatus = saleData.paymentStatus || 'pending';
       const paidAmount = saleData.paidAmount || 0;
@@ -744,31 +736,42 @@ const dbOperations = {
         remainingAmount = totalPrice - paidAmount;
       }
 
-      // Ensure proper type conversion for PostgreSQL
-      const values = [
-        String(id),                                          // $1: VARCHAR - ensure string type
-        saleData.productId ? String(saleData.productId) : null, // $2: VARCHAR - ensure string or null
-        saleData.productName ? String(saleData.productName) : null, // $3: VARCHAR - ensure string or null  
-        saleData.subscriberId ? String(saleData.subscriberId) : null, // $4: VARCHAR - ensure string or null
-        saleData.customerName ? String(saleData.customerName) : null, // $5: VARCHAR - ensure string or null
-        saleData.customerPhone ? String(saleData.customerPhone) : null, // $6: VARCHAR - ensure string or null
-        Number.isInteger(saleData.quantity) ? saleData.quantity : parseInt(saleData.quantity, 10) || 1, // $7: INTEGER
-        Number.isFinite(saleData.unitPrice) ? saleData.unitPrice : parseFloat(saleData.unitPrice) || 0, // $8: DECIMAL
-        Number.isFinite(totalPrice) ? totalPrice : parseFloat(totalPrice) || 0, // $9: DECIMAL
-        saleData.saleDate || new Date().toISOString(),      // $10: TIMESTAMP
-        saleData.paymentMethod ? String(saleData.paymentMethod) : 'cash', // $11: VARCHAR - ensure string
-        paymentStatus ? String(paymentStatus) : 'pending',  // $12: VARCHAR - ensure string
-        Number.isFinite(paidAmount) ? paidAmount : parseFloat(paidAmount) || 0, // $13: DECIMAL
-        Number.isFinite(remainingAmount) ? remainingAmount : parseFloat(remainingAmount) || 0, // $14: DECIMAL
-        Number.isFinite(saleData.profit) ? saleData.profit : parseFloat(saleData.profit || 0), // $15: DECIMAL
-        saleData.platformId ? String(saleData.platformId) : null, // $16: VARCHAR - ensure string or null
-        Number.isFinite(saleData.platformBuyingPrice) ? saleData.platformBuyingPrice : parseFloat(saleData.platformBuyingPrice || 0), // $17: DECIMAL
-        saleData.paymentType ? String(saleData.paymentType) : 'one-time', // $18: VARCHAR - ensure string
-        saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null, // $19: INTEGER
-        subscriptionStartDate,                               // $20: TIMESTAMP
-        subscriptionEndDate,                                 // $21: TIMESTAMP
-        saleData.notes ? String(saleData.notes) : null       // $22: TEXT - ensure string or null
-      ];
+      // Try a simpler query approach to avoid the type inference issue
+      const insertData = {
+        id: id,
+        product_id: saleData.productId,
+        product_name: saleData.productName,
+        subscriber_id: saleData.subscriberId || null,
+        customer_name: saleData.customerName || null,
+        customer_phone: saleData.customerPhone || null,
+        quantity: parseInt(saleData.quantity, 10) || 1,
+        unit_price: parseFloat(saleData.unitPrice) || 0,
+        total_price: parseFloat(totalPrice) || 0,
+        sale_date: saleData.saleDate || new Date().toISOString(),
+        payment_method: saleData.paymentMethod || 'cash',
+        payment_status: paymentStatus,
+        paid_amount: parseFloat(paidAmount) || 0,
+        remaining_amount: parseFloat(remainingAmount) || 0,
+        profit: parseFloat(saleData.profit || 0),
+        platform_id: saleData.platformId || null,
+        platform_buying_price: parseFloat(saleData.platformBuyingPrice || 0),
+        payment_type: saleData.paymentType || 'one-time',
+        subscription_duration: saleData.subscriptionDuration ? parseInt(saleData.subscriptionDuration, 10) : null,
+        subscription_start_date: subscriptionStartDate,
+        subscription_end_date: subscriptionEndDate,
+        notes: saleData.notes || null
+      };
+
+      // Build the query dynamically to avoid parameter type inference issues
+      const columns = Object.keys(insertData).join(', ');
+      const placeholders = Object.keys(insertData).map((_, index) => `$${index + 1}`).join(', ');
+      const values = Object.values(insertData);
+      
+      const query = `
+        INSERT INTO stock_sales (${columns}, created_at)
+        VALUES (${placeholders}, CURRENT_TIMESTAMP)
+        RETURNING *
+      `;
 
       // Debug logging with detailed value inspection
       console.log('=== STOCK SALE CREATION DEBUG ===');
